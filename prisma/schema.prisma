@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Brand {
+  id          String  @id @default(uuid()) @db.Uuid
+  slug        String  @unique
+  nameJa      String  @map("name_ja")
+  nameEn      String  @map("name_en")
+  description String?
+  stores      Store[]
+
+  @@map("brands")
+}
+
+model Category {
+  id               String     @id @default(uuid()) @db.Uuid
+  parentCategoryId String?    @map("parent_category_id") @db.Uuid
+  parentCategory   Category?  @relation("CategoryTree", fields: [parentCategoryId], references: [id])
+  children         Category[] @relation("CategoryTree")
+  slug             String     @unique
+  nameJa           String     @map("name_ja")
+  nameEn           String     @map("name_en")
+  stores           Store[]
+
+  @@map("categories")
+}
+
+model Prefecture {
+  id     String @id @default(uuid()) @db.Uuid
+  slug   String @unique
+  nameJa String @map("name_ja")
+  nameEn String @map("name_en")
+  areas  Area[]
+
+  @@map("prefectures")
+}
+
+model Area {
+  id           String     @id @default(uuid()) @db.Uuid
+  prefectureId String     @map("prefecture_id") @db.Uuid
+  prefecture   Prefecture @relation(fields: [prefectureId], references: [id])
+  slug         String     @unique
+  nameJa       String     @map("name_ja")
+  nameEn       String     @map("name_en")
+  stores       Store[]
+
+  @@map("areas")
+}
+
+model Store {
+  id                String    @id @default(uuid()) @db.Uuid
+  brandId           String?   @map("brand_id") @db.Uuid
+  brand             Brand?    @relation(fields: [brandId], references: [id])
+  categoryId        String    @map("category_id") @db.Uuid
+  category          Category  @relation(fields: [categoryId], references: [id])
+  areaId            String    @map("area_id") @db.Uuid
+  area              Area      @relation(fields: [areaId], references: [id])
+  slug              String    @unique
+  name              String
+  description       String?
+  address           String
+  lat               Decimal
+  lng               Decimal
+  phone             String?
+  websiteUrl        String?   @map("website_url")
+  facebookUrl       String?   @map("facebook_url")
+  openingHours      Json?     @map("opening_hours")
+  averageRating     Decimal   @default(0) @map("average_rating")
+  reviewCount       Int       @default(0) @map("review_count")
+  tagalogSupport    Boolean   @default(false) @map("tagalog_support")
+  gcashSupport      Boolean   @default(false) @map("gcash_support")
+  filipinoProducts  Boolean   @default(false) @map("filipino_products")
+  remittanceSupport Boolean   @default(false) @map("remittance_support")
+  priceRange        String?   @map("price_range")
+  featuredMenu      String?   @map("featured_menu")
+  isPublished       Boolean   @default(false) @map("is_published")
+  searchText        String?   @map("search_text")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  reviews           Review[]
+  favorites         Favorite[]
+
+  @@index([categoryId])
+  @@index([areaId])
+  @@index([isPublished])
+  @@map("stores")
+}
+
+model Review {
+  id           String        @id @default(uuid()) @db.Uuid
+  userId       String        @map("user_id") @db.Uuid
+  storeId      String        @map("store_id") @db.Uuid
+  store        Store         @relation(fields: [storeId], references: [id])
+  rating       Int
+  body         String?
+  helpfulCount Int          @default(0) @map("helpful_count")
+  isHidden     Boolean      @default(false) @map("is_hidden")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  photos       ReviewPhoto[]
+  reports      Report[]
+
+  @@index([storeId])
+  @@index([userId])
+  @@map("reviews")
+}
+
+model ReviewPhoto {
+  id       String @id @default(uuid()) @db.Uuid
+  reviewId String @map("review_id") @db.Uuid
+  review   Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  imageUrl String @map("image_url")
+
+  @@map("review_photos")
+}
+
+model Favorite {
+  id      String @id @default(uuid()) @db.Uuid
+  userId  String @map("user_id") @db.Uuid
+  storeId String @map("store_id") @db.Uuid
+  store   Store  @relation(fields: [storeId], references: [id])
+
+  @@unique([userId, storeId])
+  @@map("favorites")
+}
+
+model Report {
+  id        String   @id @default(uuid()) @db.Uuid
+  reviewId  String   @map("review_id") @db.Uuid
+  review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  userId    String   @map("user_id") @db.Uuid
+  reason    String
+  status    String   @default("open")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([status])
+  @@map("reports")
+}

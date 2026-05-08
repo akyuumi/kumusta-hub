@@ -1,0 +1,189 @@
+import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import type { ReactNode } from "react";
+import { ExternalLink, Flag, Heart, MapPin, Phone, Star, ThumbsUp } from "lucide-react";
+import { getArea, getBrand, getCategory, getStore, stores } from "@/lib/data";
+import { formatRating } from "@/lib/utils";
+
+export function generateStaticParams() {
+  return stores.map((store) => ({ slug: store.slug }));
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const store = getStore(slug);
+  if (!store) return {};
+
+  return {
+    title: store.name,
+    description: store.description,
+    openGraph: {
+      title: store.name,
+      description: store.description,
+      images: [store.photoUrl]
+    }
+  };
+}
+
+export default async function StoreDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const store = getStore(slug);
+  if (!store) notFound();
+
+  const area = getArea(store.areaSlug);
+  const category = getCategory(store.categorySlug);
+  const brand = getBrand(store.brandSlug);
+
+  return (
+    <main>
+      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+        <div className="mb-5 flex flex-wrap items-center gap-2 text-sm text-muted">
+          <Link href="/search">Search</Link>
+          <span>/</span>
+          {area && <Link href={`/areas/${area.slug}`}>{area.nameEn}</Link>}
+          <span>/</span>
+          <span className="text-ink">{store.name}</span>
+        </div>
+        <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="relative aspect-[16/10] overflow-hidden rounded-lg bg-[#efe8df]">
+            <Image src={store.photoUrl} alt="" fill priority sizes="(min-width: 1024px) 760px, 100vw" className="object-cover" />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+            <InfoTile label="Category" value={category?.nameEn ?? "Store"} href={category ? `/categories/${category.slug}` : undefined} />
+            <InfoTile label="Brand" value={brand?.nameEn ?? "Independent"} href={brand ? `/brands/${brand.slug}` : undefined} />
+            <InfoTile label="Area" value={area?.nameEn ?? "Japan"} href={area ? `/areas/${area.slug}` : undefined} />
+            <InfoTile label="Hours" value={store.openingHours} />
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto grid max-w-7xl gap-8 px-4 pb-12 sm:px-6 lg:grid-cols-[1fr_360px]">
+        <div className="space-y-8">
+          <div>
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <h1 className="text-3xl font-bold text-ink">{store.name}</h1>
+                <p className="mt-2 max-w-3xl leading-7 text-muted">{store.description}</p>
+              </div>
+              <div className="flex items-center gap-2 rounded-md bg-white px-3 py-2 shadow-sm">
+                <Star size={18} className="fill-mango text-mango" />
+                <span className="font-bold">{formatRating(store.averageRating)}</span>
+                <span className="text-sm text-muted">({store.reviewCount})</span>
+              </div>
+            </div>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {store.tagalogSupport && <Badge>Tagalog support</Badge>}
+              {store.gcashSupport && <Badge>GCash</Badge>}
+              {store.filipinoProducts && <Badge>Filipino products</Badge>}
+              {store.remittanceSupport && <Badge>Remittance</Badge>}
+            </div>
+          </div>
+
+          <section className="rounded-lg border border-line bg-white p-5">
+            <h2 className="text-xl font-bold text-ink">Popular menu and services</h2>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {store.featuredMenu.map((item) => (
+                <span key={item} className="rounded-full bg-[#fff5ea] px-3 py-1 text-sm font-medium">
+                  {item}
+                </span>
+              ))}
+            </div>
+            <p className="mt-4 text-sm text-muted">Price range: {store.priceRange}</p>
+          </section>
+
+          <section className="rounded-lg border border-line bg-white p-5">
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-ink">Reviews</h2>
+              <Link href="/login" className="rounded-md bg-coral px-4 py-2 text-sm font-semibold text-white">
+                Write review
+              </Link>
+            </div>
+            <div className="space-y-4">
+              {store.reviews.length > 0 ? (
+                store.reviews.map((review) => (
+                  <article key={review.id} className="rounded-md border border-line p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="font-semibold text-ink">{review.authorName}</p>
+                        <p className="text-xs text-muted">{review.createdAt}</p>
+                      </div>
+                      <div className="flex items-center gap-1 font-semibold">
+                        <Star size={16} className="fill-mango text-mango" />
+                        {review.rating}
+                      </div>
+                    </div>
+                    <p className="mt-3 leading-7 text-muted">{review.body}</p>
+                    <div className="mt-3 flex gap-3 text-sm text-muted">
+                      <button className="flex items-center gap-1 hover:text-ink">
+                        <ThumbsUp size={15} />
+                        Helpful {review.helpfulCount}
+                      </button>
+                      <button className="flex items-center gap-1 hover:text-ink">
+                        <Flag size={15} />
+                        Report
+                      </button>
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <p className="rounded-md bg-[#faf7f2] p-4 text-sm text-muted">No reviews yet. Be the first community member to review this store.</p>
+              )}
+            </div>
+          </section>
+        </div>
+
+        <aside className="space-y-4">
+          <div className="rounded-lg border border-line bg-white p-5 shadow-sm">
+            <button className="mb-4 flex h-11 w-full items-center justify-center gap-2 rounded-md border border-line font-semibold hover:border-coral">
+              <Heart size={18} />
+              Save store
+            </button>
+            <div className="space-y-3 text-sm">
+              <p className="flex gap-2">
+                <MapPin size={18} className="shrink-0 text-bay" />
+                {store.address}
+              </p>
+              <p className="flex gap-2">
+                <Phone size={18} className="shrink-0 text-bay" />
+                {store.phone}
+              </p>
+              <a className="flex gap-2 text-bay" href={store.websiteUrl} target="_blank" rel="noreferrer">
+                <ExternalLink size={18} className="shrink-0" />
+                Website
+              </a>
+              <a className="flex gap-2 text-bay" href={store.facebookUrl} target="_blank" rel="noreferrer">
+                <ExternalLink size={18} className="shrink-0" />
+                Facebook
+              </a>
+            </div>
+          </div>
+          <a
+            href={`https://www.openstreetmap.org/?mlat=${store.lat}&mlon=${store.lng}#map=16/${store.lat}/${store.lng}`}
+            target="_blank"
+            rel="noreferrer"
+            className="map-grid block h-72 rounded-lg border border-line p-4"
+          >
+            <span className="inline-flex rounded-md bg-white px-3 py-2 text-sm font-semibold shadow-sm">Open in OpenStreetMap</span>
+          </a>
+        </aside>
+      </section>
+    </main>
+  );
+}
+
+function Badge({ children }: { children: ReactNode }) {
+  return <span className="rounded-full bg-[#eef7f4] px-3 py-1 text-sm font-semibold text-bay">{children}</span>;
+}
+
+function InfoTile({ label, value, href }: { label: string; value: string; href?: string }) {
+  const content = (
+    <div className="rounded-lg border border-line bg-white p-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted">{label}</p>
+      <p className="mt-1 font-semibold text-ink">{value}</p>
+    </div>
+  );
+
+  return href ? <Link href={href}>{content}</Link> : content;
+}
