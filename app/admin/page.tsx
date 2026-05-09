@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireAdmin } from "@/lib/auth";
 import { getAreas, getBrands, getCategories, getStores } from "@/lib/db";
 
 export const metadata: Metadata = {
@@ -6,6 +7,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminPage() {
+  await requireAdmin();
   const [areas, brands, categories, stores] = await Promise.all([getAreas(), getBrands(), getCategories(), getStores()]);
   const reports = [
     { id: "report-1", review: "review-2", reason: "Possible outdated information", status: "Open" },

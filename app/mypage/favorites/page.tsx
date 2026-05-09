@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { StoreCard } from "@/components/StoreCard";
+import { requireUser } from "@/lib/auth";
 import { getStores } from "@/lib/db";
 
 export const metadata: Metadata = {
@@ -7,6 +8,7 @@ export const metadata: Metadata = {
 };
 
 export default async function FavoritesPage() {
+  await requireUser("/mypage/favorites");
   const stores = await getStores();
   const favoriteStores = stores.slice(0, 2);
 

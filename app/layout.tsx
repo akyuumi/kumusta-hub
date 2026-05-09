@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Globe2, Heart, Menu, PlusCircle, Search, UserRound } from "lucide-react";
+import { Globe2, Menu, Search, UserRound } from "lucide-react";
+import { AuthNav } from "@/components/AuthNav";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,13 +18,6 @@ export const metadata: Metadata = {
   }
 };
 
-const navItems = [
-  { href: "/search", label: "Search", icon: Search },
-  { href: "/store-request", label: "Add store", icon: PlusCircle },
-  { href: "/mypage/favorites", label: "Favorites", icon: Heart },
-  { href: "/login", label: "Login", icon: UserRound }
-];
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ja">
@@ -34,21 +28,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <span className="grid h-9 w-9 place-items-center rounded-md bg-coral text-white">K</span>
               <span>KumustaHub</span>
             </Link>
-            <nav className="hidden items-center gap-2 md:flex">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted hover:bg-[#f4eee7] hover:text-ink"
-                >
-                  <item.icon size={17} />
-                  {item.label}
-                </Link>
-              ))}
+            <div className="hidden items-center gap-2 md:flex">
+              <AuthNav />
               <Link className="rounded-md border border-line p-2 text-muted hover:text-ink" href="/admin" aria-label="Admin">
                 <Menu size={18} />
               </Link>
-            </nav>
+            </div>
             <div className="flex items-center gap-2 md:hidden">
               <Link className="rounded-md border border-line p-2" href="/search" aria-label="Search">
                 <Search size={18} />

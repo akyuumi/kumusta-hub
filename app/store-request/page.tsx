@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireUser } from "@/lib/auth";
 import { getAreas, getCategories } from "@/lib/db";
 
 export const metadata: Metadata = {
@@ -7,6 +8,7 @@ export const metadata: Metadata = {
 };
 
 export default async function StoreRequestPage() {
+  await requireUser("/store-request");
   const [areas, categories] = await Promise.all([getAreas(), getCategories()]);
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
