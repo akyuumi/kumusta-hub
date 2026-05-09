@@ -5,11 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 
 const providers = new Set<Provider>(["google", "facebook"]);
 
-export async function POST(request: NextRequest) {
-  const formData = await request.formData();
-  const provider = String(formData.get("provider") ?? "") as Provider;
-  const next = normalizeRedirectPath(String(formData.get("next") ?? "/mypage"));
-
+async function redirectToProvider(request: NextRequest, provider: Provider, next: string) {
   if (!providers.has(provider)) {
     return NextResponse.redirect(new URL("/login?error=unsupported_provider", request.url));
   }
@@ -31,4 +27,19 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.redirect(data.url);
+}
+
+export async function GET(request: NextRequest) {
+  const provider = String(request.nextUrl.searchParams.get("provider") ?? "") as Provider;
+  const next = normalizeRedirectPath(request.nextUrl.searchParams.get("next"));
+
+  return redirectToProvider(request, provider, next);
+}
+
+export async function POST(request: NextRequest) {
+  const formData = await request.formData();
+  const provider = String(formData.get("provider") ?? "") as Provider;
+  const next = normalizeRedirectPath(String(formData.get("next") ?? "/mypage"));
+
+  return redirectToProvider(request, provider, next);
 }
