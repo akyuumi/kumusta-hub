@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { StoreCard } from "@/components/StoreCard";
-import { getArea, stores } from "@/lib/data";
+import { getArea, getStores } from "@/lib/db";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const area = getArea(slug);
+  const area = await getArea(slug);
   return area ? { title: `${area.nameEn} Filipino stores`, description: `Find Filipino community stores in ${area.nameEn}.` } : {};
 }
 
 export default async function AreaPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const area = getArea(slug);
+  const area = await getArea(slug);
   if (!area) notFound();
 
+  const stores = await getStores();
   const areaStores = stores.filter((store) => store.areaSlug === area.slug && store.isPublished);
 
   return (

@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Brand {
@@ -79,6 +80,7 @@ model Store {
   remittanceSupport Boolean   @default(false) @map("remittance_support")
   priceRange        String?   @map("price_range")
   featuredMenu      String?   @map("featured_menu")
+  photoUrl          String?   @map("photo_url")
   isPublished       Boolean   @default(false) @map("is_published")
   searchText        String?   @map("search_text")
   createdAt         DateTime  @default(now()) @map("created_at")

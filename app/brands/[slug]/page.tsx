@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { StoreCard } from "@/components/StoreCard";
-import { getBrand, stores } from "@/lib/data";
+import { getBrand, getStores } from "@/lib/db";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const brand = getBrand(slug);
+  const brand = await getBrand(slug);
   return brand ? { title: brand.nameEn, description: brand.description } : {};
 }
 
 export default async function BrandPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const brand = getBrand(slug);
+  const brand = await getBrand(slug);
   if (!brand) notFound();
 
+  const stores = await getStores();
   const brandStores = stores.filter((store) => store.brandSlug === brand.slug && store.isPublished);
 
   return (

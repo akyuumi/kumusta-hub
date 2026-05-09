@@ -4,16 +4,17 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { ExternalLink, Flag, Heart, MapPin, Phone, Star, ThumbsUp } from "lucide-react";
-import { getArea, getBrand, getCategory, getStore, stores } from "@/lib/data";
+import { getArea, getBrand, getCategory, getStore, getStores } from "@/lib/db";
 import { formatRating } from "@/lib/utils";
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const stores = await getStores();
   return stores.map((store) => ({ slug: store.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const store = getStore(slug);
+  const store = await getStore(slug);
   if (!store) return {};
 
   return {
@@ -29,12 +30,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function StoreDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const store = getStore(slug);
+  const store = await getStore(slug);
   if (!store) notFound();
 
-  const area = getArea(store.areaSlug);
-  const category = getCategory(store.categorySlug);
-  const brand = getBrand(store.brandSlug);
+  const [area, category, brand] = await Promise.all([getArea(store.areaSlug), getCategory(store.categorySlug), getBrand(store.brandSlug)]);
 
   return (
     <main>

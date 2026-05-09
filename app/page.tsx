@@ -3,9 +3,10 @@ import type { ElementType } from "react";
 import { ArrowRight, MapPinned, MessageSquareText, ShieldCheck } from "lucide-react";
 import { SearchForm } from "@/components/SearchForm";
 import { StoreCard } from "@/components/StoreCard";
-import { areas, categories, stores } from "@/lib/data";
+import { getAreas, getCategories, getStores } from "@/lib/db";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const [areas, categories, stores] = await Promise.all([getAreas(), getCategories(), getStores()]);
   const featuredStores = stores.slice(0, 3);
 
   return (
@@ -22,7 +23,7 @@ export default function HomePage() {
                 Search trusted places for food, remittance, delivery, groceries, Tagalog support, and community essentials across Japan.
               </p>
             </div>
-            <SearchForm />
+            <SearchForm areas={areas} categories={categories} />
             <div className="flex flex-wrap gap-3">
               {areas.map((area) => (
                 <Link key={area.slug} href={`/areas/${area.slug}`} className="rounded-full border border-line bg-white px-4 py-2 text-sm font-medium hover:border-bay">

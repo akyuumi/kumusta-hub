@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { MapPanel } from "@/components/MapPanel";
 import { SearchForm } from "@/components/SearchForm";
 import { StoreCard } from "@/components/StoreCard";
-import { searchStores } from "@/lib/data";
+import { getAreas, getCategories, searchStores } from "@/lib/db";
 import type { StoreSearchParams } from "@/lib/types";
 
 export const metadata: Metadata = {
@@ -12,12 +12,12 @@ export const metadata: Metadata = {
 
 export default async function SearchPage({ searchParams }: { searchParams: Promise<StoreSearchParams> }) {
   const params = await searchParams;
-  const results = searchStores(params);
+  const [areas, categories, results] = await Promise.all([getAreas(), getCategories(), searchStores(params)]);
 
   return (
     <main className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[1fr_420px]">
       <section className="space-y-5">
-        <SearchForm params={params} compact />
+        <SearchForm params={params} compact areas={areas} categories={categories} />
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-ink">Search results</h1>

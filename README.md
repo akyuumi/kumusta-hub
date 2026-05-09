@@ -27,9 +27,12 @@ Copy `.env.example` to `.env.local` and set these values when Supabase is ready:
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 DATABASE_URL=
+DIRECT_URL=
 ```
 
 The current UI uses local seed data in `lib/data.ts` so the MVP can run before the database is provisioned.
+
+For Vercel, set `DATABASE_URL` to the Supabase Transaction pooler connection string. Keep the direct database URL as `DIRECT_URL` for migrations and local admin tasks.
 
 ## Implemented MVP surface
 

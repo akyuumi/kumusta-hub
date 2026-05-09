@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { areas, brands, categories, stores } from "@/lib/data";
+import { getAreas, getBrands, getCategories, getStores } from "@/lib/db";
 
 export const metadata: Metadata = {
   title: "Admin"
 };
 
-export default function AdminPage() {
+export default async function AdminPage() {
+  const [areas, brands, categories, stores] = await Promise.all([getAreas(), getBrands(), getCategories(), getStores()]);
   const reports = [
     { id: "report-1", review: "review-2", reason: "Possible outdated information", status: "Open" },
     { id: "report-2", review: "review-3", reason: "Duplicate review", status: "In review" }

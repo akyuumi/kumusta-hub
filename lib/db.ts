@@ -1,0 +1,247 @@
+import type { Prisma } from "@prisma/client";
+import {
+  areas as fallbackAreas,
+  brands as fallbackBrands,
+  categories as fallbackCategories,
+  getArea as getFallbackArea,
+  getBrand as getFallbackBrand,
+  getCategory as getFallbackCategory,
+  getStore as getFallbackStore,
+  searchStores as searchFallbackStores,
+  stores as fallbackStores
+} from "@/lib/data";
+import { prisma } from "@/lib/prisma";
+import type { Area, Brand, Category, Store, StoreSearchParams } from "@/lib/types";
+
+const storeInclude = {
+  reviews: {
+    where: { isHidden: false },
+    orderBy: { createdAt: "desc" },
+    take: 20
+  },
+  brand: true,
+  category: true,
+  area: true
+} satisfies Prisma.StoreInclude;
+
+type StoreWithRelations = Prisma.StoreGetPayload<{ include: typeof storeInclude }>;
+
+function canUseDatabase() {
+  return Boolean(process.env.DATABASE_URL);
+}
+
+function mapCategory(category: { id: string; slug: string; nameJa: string; nameEn: string }): Category {
+  return {
+    id: category.id,
+    slug: category.slug,
+    nameJa: category.nameJa,
+    nameEn: category.nameEn
+  };
+}
+
+function mapArea(area: { id: string; slug: string; nameJa: string; nameEn: string; prefecture?: { nameEn: string } | null }): Area {
+  return {
+    id: area.id,
+    slug: area.slug,
+    prefecture: area.prefecture?.nameEn ?? "Japan",
+    nameJa: area.nameJa,
+    nameEn: area.nameEn
+  };
+}
+
+function mapBrand(brand: { id: string; slug: string; nameJa: string; nameEn: string; description: string | null }): Brand {
+  return {
+    id: brand.id,
+    slug: brand.slug,
+    nameJa: brand.nameJa,
+    nameEn: brand.nameEn,
+    description: brand.description ?? ""
+  };
+}
+
+function splitFeaturedMenu(value: string | null) {
+  return value
+    ? value
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean)
+    : [];
+}
+
+function stringifyOpeningHours(value: Prisma.JsonValue | null) {
+  if (!value) return "";
+  return typeof value === "string" ? value : JSON.stringify(value);
+}
+
+function mapStore(store: StoreWithRelations): Store {
+  return {
+    id: store.id,
+    slug: store.slug,
+    brandSlug: store.brand?.slug ?? "",
+    categorySlug: store.category.slug,
+    areaSlug: store.area.slug,
+    name: store.name,
+    description: store.description ?? "",
+    address: store.address,
+    lat: Number(store.lat),
+    lng: Number(store.lng),
+    phone: store.phone ?? "",
+    websiteUrl: store.websiteUrl ?? "",
+    facebookUrl: store.facebookUrl ?? "",
+    openingHours: stringifyOpeningHours(store.openingHours),
+    averageRating: Number(store.averageRating),
+    reviewCount: store.reviewCount,
+    tagalogSupport: store.tagalogSupport,
+    gcashSupport: store.gcashSupport,
+    filipinoProducts: store.filipinoProducts,
+    remittanceSupport: store.remittanceSupport,
+    priceRange: store.priceRange ?? "",
+    featuredMenu: splitFeaturedMenu(store.featuredMenu),
+    photoUrl: store.photoUrl ?? "https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=1200&q=80",
+    isPublished: store.isPublished,
+    reviews: store.reviews.map((review) => ({
+      id: review.id,
+      authorName: "Community member",
+      rating: review.rating,
+      body: review.body ?? "",
+      helpfulCount: review.helpfulCount,
+      createdAt: review.createdAt.toISOString().slice(0, 10)
+    }))
+  };
+}
+
+export async function getCategories(): Promise<Category[]> {
+  if (!canUseDatabase()) return fallbackCategories;
+
+  try {
+    const categories = await prisma.category.findMany({ orderBy: { nameEn: "asc" } });
+    return categories.map(mapCategory);
+  } catch {
+    return fallbackCategories;
+  }
+}
+
+export async function getAreas(): Promise<Area[]> {
+  if (!canUseDatabase()) return fallbackAreas;
+
+  try {
+    const areas = await prisma.area.findMany({
+      include: { prefecture: true },
+      orderBy: { nameEn: "asc" }
+    });
+    return areas.map(mapArea);
+  } catch {
+    return fallbackAreas;
+  }
+}
+
+export async function getBrands(): Promise<Brand[]> {
+  if (!canUseDatabase()) return fallbackBrands;
+
+  try {
+    const brands = await prisma.brand.findMany({ orderBy: { nameEn: "asc" } });
+    return brands.map(mapBrand);
+  } catch {
+    return fallbackBrands;
+  }
+}
+
+export async function getStores(): Promise<Store[]> {
+  if (!canUseDatabase()) return fallbackStores;
+
+  try {
+    const stores = await prisma.store.findMany({
+      where: { isPublished: true },
+      include: storeInclude,
+      orderBy: [{ averageRating: "desc" }, { name: "asc" }]
+    });
+    return stores.map(mapStore);
+  } catch {
+    return fallbackStores;
+  }
+}
+
+export async function searchStores(params: StoreSearchParams): Promise<Store[]> {
+  if (!canUseDatabase()) return searchFallbackStores(params);
+
+  try {
+    const query = (params.q ?? "").trim();
+    const minRating = Number(params.rating || 0);
+
+    const stores = await prisma.store.findMany({
+      where: {
+        isPublished: true,
+        ...(params.area ? { area: { slug: params.area } } : {}),
+        ...(params.category ? { category: { slug: params.category } } : {}),
+        ...(params.tagalog === "true" ? { tagalogSupport: true } : {}),
+        ...(minRating ? { averageRating: { gte: minRating } } : {}),
+        ...(query
+          ? {
+              OR: [
+                { name: { contains: query, mode: "insensitive" } },
+                { description: { contains: query, mode: "insensitive" } },
+                { address: { contains: query, mode: "insensitive" } },
+                { searchText: { contains: query, mode: "insensitive" } }
+              ]
+            }
+          : {})
+      },
+      include: storeInclude,
+      orderBy: [{ averageRating: "desc" }, { name: "asc" }]
+    });
+
+    return stores.map(mapStore);
+  } catch {
+    return searchFallbackStores(params);
+  }
+}
+
+export async function getStore(slug: string): Promise<Store | undefined> {
+  if (!canUseDatabase()) return getFallbackStore(slug);
+
+  try {
+    const store = await prisma.store.findFirst({
+      where: { slug, isPublished: true },
+      include: storeInclude
+    });
+    return store ? mapStore(store) : undefined;
+  } catch {
+    return getFallbackStore(slug);
+  }
+}
+
+export async function getCategory(slug: string): Promise<Category | undefined> {
+  if (!canUseDatabase()) return getFallbackCategory(slug);
+
+  try {
+    const category = await prisma.category.findUnique({ where: { slug } });
+    return category ? mapCategory(category) : undefined;
+  } catch {
+    return getFallbackCategory(slug);
+  }
+}
+
+export async function getArea(slug: string): Promise<Area | undefined> {
+  if (!canUseDatabase()) return getFallbackArea(slug);
+
+  try {
+    const area = await prisma.area.findUnique({
+      where: { slug },
+      include: { prefecture: true }
+    });
+    return area ? mapArea(area) : undefined;
+  } catch {
+    return getFallbackArea(slug);
+  }
+}
+
+export async function getBrand(slug: string): Promise<Brand | undefined> {
+  if (!canUseDatabase()) return getFallbackBrand(slug);
+
+  try {
+    const brand = await prisma.brand.findUnique({ where: { slug } });
+    return brand ? mapBrand(brand) : undefined;
+  } catch {
+    return getFallbackBrand(slug);
+  }
+}

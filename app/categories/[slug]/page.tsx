@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { StoreCard } from "@/components/StoreCard";
-import { getCategory, stores } from "@/lib/data";
+import { getCategory, getStores } from "@/lib/db";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const category = getCategory(slug);
+  const category = await getCategory(slug);
   return category ? { title: category.nameEn, description: `Find ${category.nameEn} stores in Japan.` } : {};
 }
 
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const category = getCategory(slug);
+  const category = await getCategory(slug);
   if (!category) notFound();
 
+  const stores = await getStores();
   const categoryStores = stores.filter((store) => store.categorySlug === category.slug && store.isPublished);
 
   return (

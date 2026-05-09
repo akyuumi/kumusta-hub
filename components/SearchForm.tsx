@@ -1,8 +1,18 @@
 import { Search } from "lucide-react";
-import { areas, categories } from "@/lib/data";
-import type { StoreSearchParams } from "@/lib/types";
+import { areas as fallbackAreas, categories as fallbackCategories } from "@/lib/data";
+import type { Area, Category, StoreSearchParams } from "@/lib/types";
 
-export function SearchForm({ params, compact = false }: { params?: StoreSearchParams; compact?: boolean }) {
+export function SearchForm({
+  params,
+  compact = false,
+  areas = fallbackAreas,
+  categories = fallbackCategories
+}: {
+  params?: StoreSearchParams;
+  compact?: boolean;
+  areas?: Area[];
+  categories?: Category[];
+}) {
   return (
     <form
       action="/search"

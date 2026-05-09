@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { StoreCard } from "@/components/StoreCard";
-import { stores } from "@/lib/data";
+import { getStores } from "@/lib/db";
 
 export const metadata: Metadata = {
   title: "Favorites"
 };
 
-export default function FavoritesPage() {
+export default async function FavoritesPage() {
+  const stores = await getStores();
   const favoriteStores = stores.slice(0, 2);
 
   return (

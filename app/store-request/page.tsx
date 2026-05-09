@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { areas, categories } from "@/lib/data";
+import { getAreas, getCategories } from "@/lib/db";
 
 export const metadata: Metadata = {
   title: "Store request",
   description: "Request a new Filipino community store listing."
 };
 
-export default function StoreRequestPage() {
+export default async function StoreRequestPage() {
+  const [areas, categories] = await Promise.all([getAreas(), getCategories()]);
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <h1 className="text-3xl font-bold text-ink">Store request</h1>
