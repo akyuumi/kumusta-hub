@@ -17,7 +17,10 @@ const storeInclude = {
   reviews: {
     where: { isHidden: false },
     orderBy: { createdAt: "desc" },
-    take: 20
+    take: 20,
+    include: {
+      photos: true
+    }
   },
   brand: true,
   category: true,
@@ -116,7 +119,11 @@ function mapStore(store: StoreWithRelations): Store {
       rating: review.rating,
       body: review.body ?? "",
       helpfulCount: review.helpfulCount,
-      createdAt: review.createdAt.toISOString().slice(0, 10)
+      createdAt: review.createdAt.toISOString().slice(0, 10),
+      photos: review.photos.map((photo) => ({
+        id: photo.id,
+        imageUrl: photo.imageUrl
+      }))
     }))
   };
 }

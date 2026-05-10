@@ -113,6 +113,10 @@ export default async function StoreDetailPage({
             </div>
             {query.error === "invalid_rating" && <p className="mb-4 rounded-md bg-[#fff5ea] p-3 text-sm font-medium text-coral">Choose a rating from 1 to 5.</p>}
             {query.error === "review_too_long" && <p className="mb-4 rounded-md bg-[#fff5ea] p-3 text-sm font-medium text-coral">Review text must be 2,000 characters or less.</p>}
+            {query.error === "too_many_review_photos" && <p className="mb-4 rounded-md bg-[#fff5ea] p-3 text-sm font-medium text-coral">Upload up to 3 photos per review.</p>}
+            {query.error === "invalid_review_photo_type" && <p className="mb-4 rounded-md bg-[#fff5ea] p-3 text-sm font-medium text-coral">Review photos must be JPEG, PNG, or WebP.</p>}
+            {query.error === "review_photo_too_large" && <p className="mb-4 rounded-md bg-[#fff5ea] p-3 text-sm font-medium text-coral">Each review photo must be 5MB or less.</p>}
+            {query.error === "review_photo_upload_failed" && <p className="mb-4 rounded-md bg-[#fff5ea] p-3 text-sm font-medium text-coral">Photo upload failed. Please try again.</p>}
             {user ? <ReviewForm slug={store.slug} /> : <p className="mb-4 rounded-md bg-[#faf7f2] p-4 text-sm text-muted">Login to write a review and help the community find reliable Filipino places in Japan.</p>}
             <div className="space-y-4">
               {store.reviews.length > 0 ? (
@@ -129,6 +133,15 @@ export default async function StoreDetailPage({
                       </div>
                     </div>
                     <p className="mt-3 leading-7 text-muted">{review.body}</p>
+                    {review.photos.length > 0 && (
+                      <div className="mt-3 grid grid-cols-3 gap-2 sm:max-w-md">
+                        {review.photos.map((photo) => (
+                          <div key={photo.id} className="relative aspect-square overflow-hidden rounded-md bg-[#efe8df]">
+                            <Image src={photo.imageUrl} alt="" fill sizes="(min-width: 640px) 130px, 30vw" className="object-cover" />
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     <div className="mt-3 flex gap-3 text-sm text-muted">
                       <button className="flex items-center gap-1 hover:text-ink">
                         <ThumbsUp size={15} />
@@ -222,6 +235,11 @@ function ReviewForm({ slug }: { slug: string }) {
           <textarea name="body" maxLength={2000} rows={4} className="w-full rounded-md border border-line bg-white p-3 outline-none focus:border-bay" placeholder="Food, service, Tagalog support, product availability..." />
         </label>
       </div>
+      <label className="mt-3 block space-y-1">
+        <span className="text-sm font-semibold text-ink">Photos</span>
+        <input name="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple className="w-full rounded-md border border-line bg-white px-3 py-2 text-sm outline-none file:mr-3 file:rounded-md file:border-0 file:bg-bay file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white focus:border-bay" />
+        <span className="block text-xs text-muted">Up to 3 photos, 5MB each.</span>
+      </label>
       <div className="mt-3 flex justify-end">
         <button className="rounded-md bg-coral px-4 py-2 text-sm font-semibold text-white hover:bg-[#d84d40]">Post review</button>
       </div>

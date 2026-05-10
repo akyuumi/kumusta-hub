@@ -30,6 +30,12 @@ export type Review = {
   body: string;
   helpfulCount: number;
   createdAt: string;
+  photos: ReviewPhoto[];
+};
+
+export type ReviewPhoto = {
+  id: string;
+  imageUrl: string;
 };
 
 export type Store = {
