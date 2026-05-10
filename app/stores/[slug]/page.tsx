@@ -4,8 +4,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { ExternalLink, Flag, Heart, MapPin, Phone, Star, ThumbsUp } from "lucide-react";
+import { getCurrentUser } from "@/lib/auth";
 import { getArea, getBrand, getCategory, getStore, getStores } from "@/lib/db";
 import { formatRating } from "@/lib/utils";
+import { createReviewAction } from "./actions";
 
 export async function generateStaticParams() {
   const stores = await getStores();
@@ -28,12 +30,20 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-export default async function StoreDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function StoreDetailPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{
+    error?: string;
+  }>;
+}) {
   const { slug } = await params;
   const store = await getStore(slug);
   if (!store) notFound();
 
-  const [area, category, brand] = await Promise.all([getArea(store.areaSlug), getCategory(store.categorySlug), getBrand(store.brandSlug)]);
+  const [area, category, brand, user, query] = await Promise.all([getArea(store.areaSlug), getCategory(store.categorySlug), getBrand(store.brandSlug), getCurrentUser(), searchParams]);
 
   return (
     <main>
@@ -92,13 +102,18 @@ export default async function StoreDetailPage({ params }: { params: Promise<{ sl
             <p className="mt-4 text-sm text-muted">Price range: {store.priceRange}</p>
           </section>
 
-          <section className="rounded-lg border border-line bg-white p-5">
+          <section id="reviews" className="rounded-lg border border-line bg-white p-5">
             <div className="mb-5 flex items-center justify-between">
               <h2 className="text-xl font-bold text-ink">Reviews</h2>
-              <Link href="/login" className="rounded-md bg-coral px-4 py-2 text-sm font-semibold text-white">
-                Write review
-              </Link>
+              {!user && (
+                <Link href={`/login?next=/stores/${store.slug}`} className="rounded-md bg-coral px-4 py-2 text-sm font-semibold text-white">
+                  Write review
+                </Link>
+              )}
             </div>
+            {query.error === "invalid_rating" && <p className="mb-4 rounded-md bg-[#fff5ea] p-3 text-sm font-medium text-coral">Choose a rating from 1 to 5.</p>}
+            {query.error === "review_too_long" && <p className="mb-4 rounded-md bg-[#fff5ea] p-3 text-sm font-medium text-coral">Review text must be 2,000 characters or less.</p>}
+            {user ? <ReviewForm slug={store.slug} /> : <p className="mb-4 rounded-md bg-[#faf7f2] p-4 text-sm text-muted">Login to write a review and help the community find reliable Filipino places in Japan.</p>}
             <div className="space-y-4">
               {store.reviews.length > 0 ? (
                 store.reviews.map((review) => (
@@ -185,4 +200,31 @@ function InfoTile({ label, value, href }: { label: string; value: string; href?:
   );
 
   return href ? <Link href={href}>{content}</Link> : content;
+}
+
+function ReviewForm({ slug }: { slug: string }) {
+  return (
+    <form action={createReviewAction} className="mb-5 rounded-md border border-line bg-[#faf7f2] p-4">
+      <input type="hidden" name="slug" value={slug} />
+      <div className="grid gap-4 md:grid-cols-[160px_1fr]">
+        <label className="space-y-1">
+          <span className="text-sm font-semibold text-ink">Rating</span>
+          <select name="rating" required defaultValue="5" className="h-11 w-full rounded-md border border-line bg-white px-3 outline-none focus:border-bay">
+            <option value="5">5 stars</option>
+            <option value="4">4 stars</option>
+            <option value="3">3 stars</option>
+            <option value="2">2 stars</option>
+            <option value="1">1 star</option>
+          </select>
+        </label>
+        <label className="space-y-1">
+          <span className="text-sm font-semibold text-ink">Review</span>
+          <textarea name="body" maxLength={2000} rows={4} className="w-full rounded-md border border-line bg-white p-3 outline-none focus:border-bay" placeholder="Food, service, Tagalog support, product availability..." />
+        </label>
+      </div>
+      <div className="mt-3 flex justify-end">
+        <button className="rounded-md bg-coral px-4 py-2 text-sm font-semibold text-white hover:bg-[#d84d40]">Post review</button>
+      </div>
+    </form>
+  );
 }
