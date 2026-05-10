@@ -10,6 +10,105 @@ const STORE_PHOTOS_BUCKET = "store-photos";
 const MAX_STORE_PHOTO_SIZE = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
+export async function createStoreAction(formData: FormData) {
+  const user = await requireAdmin();
+  const name = String(formData.get("name") ?? "").trim();
+  const slug = slugify(String(formData.get("slug") ?? name));
+  const description = emptyToNull(formData.get("description"));
+  const address = String(formData.get("address") ?? "").trim();
+  const lat = Number(formData.get("lat"));
+  const lng = Number(formData.get("lng"));
+  const categoryId = String(formData.get("categoryId") ?? "");
+  const areaId = String(formData.get("areaId") ?? "");
+  const brandId = emptyToNull(formData.get("brandId"));
+  const phone = emptyToNull(formData.get("phone"));
+  const websiteUrl = emptyToNull(formData.get("websiteUrl"));
+  const facebookUrl = emptyToNull(formData.get("facebookUrl"));
+  const openingHours = emptyToNull(formData.get("openingHours"));
+  const priceRange = emptyToNull(formData.get("priceRange"));
+  const featuredMenu = emptyToNull(formData.get("featuredMenu"));
+  const isPublished = formData.get("isPublished") === "on";
+  const tagalogSupport = formData.get("tagalogSupport") === "on";
+  const gcashSupport = formData.get("gcashSupport") === "on";
+  const filipinoProducts = formData.get("filipinoProducts") === "on";
+  const remittanceSupport = formData.get("remittanceSupport") === "on";
+  const photo = formData.get("photo");
+  const altText = String(formData.get("altText") ?? "").trim();
+
+  if (!name || !slug || !address || !categoryId || !areaId || !Number.isFinite(lat) || !Number.isFinite(lng)) {
+    redirect("/admin?error=missing_store_fields#add-store");
+  }
+
+  if (photo instanceof File && photo.size > 0) {
+    validateStorePhoto(photo);
+  }
+
+  const [category, area, brand, existingStore] = await Promise.all([
+    prisma.category.findUnique({ where: { id: categoryId }, select: { nameEn: true } }),
+    prisma.area.findUnique({ where: { id: areaId }, select: { nameEn: true } }),
+    brandId ? prisma.brand.findUnique({ where: { id: brandId }, select: { nameEn: true } }) : null,
+    prisma.store.findUnique({ where: { slug }, select: { id: true } })
+  ]);
+
+  if (!category || !area || (brandId && !brand)) {
+    redirect("/admin?error=invalid_store_taxonomy#add-store");
+  }
+
+  if (existingStore) {
+    redirect("/admin?error=store_slug_exists#add-store");
+  }
+
+  const photoUpload = photo instanceof File && photo.size > 0 ? await uploadStorePhotoFile({ file: photo, slug }) : null;
+  const searchText = [name, description, address, featuredMenu, brand?.nameEn, category.nameEn, area.nameEn].filter(Boolean).join(" ");
+
+  const store = await prisma.store.create({
+    data: {
+      slug,
+      brandId,
+      categoryId,
+      areaId,
+      name,
+      description,
+      address,
+      lat,
+      lng,
+      phone,
+      websiteUrl,
+      facebookUrl,
+      openingHours: openingHours ?? undefined,
+      tagalogSupport,
+      gcashSupport,
+      filipinoProducts,
+      remittanceSupport,
+      priceRange,
+      featuredMenu,
+      photoUrl: photoUpload?.publicUrl ?? null,
+      isPublished,
+      searchText,
+      photos: photoUpload
+        ? {
+            create: {
+              imageUrl: photoUpload.publicUrl,
+              storagePath: photoUpload.storagePath,
+              altText: altText || name,
+              sortOrder: 0,
+              isPrimary: true,
+              uploadedBy: user.id
+            }
+          }
+        : undefined
+    },
+    select: {
+      slug: true
+    }
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/search");
+  revalidatePath(`/stores/${store.slug}`);
+  redirect("/admin?status=store_created#store-management");
+}
+
 export async function uploadStorePhotoAction(formData: FormData) {
   const user = await requireAdmin();
   const storeId = String(formData.get("storeId") ?? "");
@@ -21,13 +120,7 @@ export async function uploadStorePhotoAction(formData: FormData) {
     redirect("/admin?error=missing_store_photo");
   }
 
-  if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
-    redirect("/admin?error=invalid_store_photo_type");
-  }
-
-  if (file.size > MAX_STORE_PHOTO_SIZE) {
-    redirect("/admin?error=store_photo_too_large");
-  }
+  validateStorePhoto(file);
 
   const store = await prisma.store.findUnique({
     where: { id: storeId },
@@ -42,27 +135,7 @@ export async function uploadStorePhotoAction(formData: FormData) {
     redirect("/admin?error=store_not_found");
   }
 
-  const supabase = await createClient();
-  await supabase.storage.createBucket(STORE_PHOTOS_BUCKET, {
-    public: true,
-    fileSizeLimit: `${MAX_STORE_PHOTO_SIZE}`,
-    allowedMimeTypes: [...ALLOWED_IMAGE_TYPES]
-  });
-
-  const extension = getImageExtension(file);
-  const storagePath = `${store.slug}/${crypto.randomUUID()}.${extension}`;
-  const { error: uploadError } = await supabase.storage.from(STORE_PHOTOS_BUCKET).upload(storagePath, file, {
-    contentType: file.type,
-    upsert: false
-  });
-
-  if (uploadError) {
-    redirect("/admin?error=store_photo_upload_failed");
-  }
-
-  const {
-    data: { publicUrl }
-  } = supabase.storage.from(STORE_PHOTOS_BUCKET).getPublicUrl(storagePath);
+  const { publicUrl, storagePath } = await uploadStorePhotoFile({ file, slug: store.slug });
 
   await prisma.$transaction(async (tx) => {
     if (isPrimary) {
@@ -97,8 +170,57 @@ export async function uploadStorePhotoAction(formData: FormData) {
   redirect("/admin?status=store_photo_uploaded");
 }
 
+async function uploadStorePhotoFile({ file, slug }: { file: File; slug: string }) {
+  const supabase = await createClient();
+  await supabase.storage.createBucket(STORE_PHOTOS_BUCKET, {
+    public: true,
+    fileSizeLimit: `${MAX_STORE_PHOTO_SIZE}`,
+    allowedMimeTypes: [...ALLOWED_IMAGE_TYPES]
+  });
+
+  const extension = getImageExtension(file);
+  const storagePath = `${slug}/${crypto.randomUUID()}.${extension}`;
+  const { error: uploadError } = await supabase.storage.from(STORE_PHOTOS_BUCKET).upload(storagePath, file, {
+    contentType: file.type,
+    upsert: false
+  });
+
+  if (uploadError) {
+    redirect("/admin?error=store_photo_upload_failed");
+  }
+
+  const {
+    data: { publicUrl }
+  } = supabase.storage.from(STORE_PHOTOS_BUCKET).getPublicUrl(storagePath);
+
+  return { publicUrl, storagePath };
+}
+
+function validateStorePhoto(file: File) {
+  if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
+    redirect("/admin?error=invalid_store_photo_type");
+  }
+
+  if (file.size > MAX_STORE_PHOTO_SIZE) {
+    redirect("/admin?error=store_photo_too_large");
+  }
+}
+
 function getImageExtension(file: File) {
   if (file.type === "image/png") return "png";
   if (file.type === "image/webp") return "webp";
   return "jpg";
+}
+
+function emptyToNull(value: FormDataEntryValue | null) {
+  const text = String(value ?? "").trim();
+  return text || null;
+}
+
+function slugify(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }

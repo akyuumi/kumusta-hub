@@ -179,6 +179,20 @@ export async function getStores(): Promise<Store[]> {
   }
 }
 
+export async function getAdminStores(): Promise<Store[]> {
+  if (!canUseDatabase()) return fallbackStores;
+
+  try {
+    const stores = await prisma.store.findMany({
+      include: storeInclude,
+      orderBy: [{ isPublished: "desc" }, { name: "asc" }]
+    });
+    return stores.map(mapStore);
+  } catch {
+    return fallbackStores;
+  }
+}
+
 export async function searchStores(params: StoreSearchParams): Promise<Store[]> {
   if (!canUseDatabase()) return searchFallbackStores(params);
 
