@@ -46,6 +46,12 @@ https://kumusta-hub.vercel.app/auth/callback
 
 Set `ADMIN_EMAILS` to a comma-separated allowlist of operator email addresses. `/admin` is denied unless the signed-in user's email is listed there.
 
+## Store Photos
+
+Admin users can upload store photos from `/admin`. Images are stored in the Supabase Storage bucket named `store-photos`, and metadata is stored in `store_photos`.
+
+The bucket should be public for the current image rendering path. The upload action attempts to create it automatically, but production projects should verify the bucket and policies in Supabase before launch.
+
 ## Implemented MVP surface
 
 - Top page with area/category discovery
