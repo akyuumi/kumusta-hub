@@ -87,11 +87,29 @@ model Store {
   updatedAt         DateTime  @updatedAt @map("updated_at")
   reviews           Review[]
   favorites         Favorite[]
+  photos            StorePhoto[]
 
   @@index([categoryId])
   @@index([areaId])
   @@index([isPublished])
   @@map("stores")
+}
+
+model StorePhoto {
+  id          String   @id @default(uuid()) @db.Uuid
+  storeId     String   @map("store_id") @db.Uuid
+  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  imageUrl    String   @map("image_url")
+  storagePath String?  @map("storage_path")
+  altText     String?  @map("alt_text")
+  sortOrder   Int      @default(0) @map("sort_order")
+  isPrimary   Boolean  @default(false) @map("is_primary")
+  uploadedBy  String?  @map("uploaded_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([storeId, sortOrder])
+  @@index([storeId, isPrimary])
+  @@map("store_photos")
 }
 
 model Review {

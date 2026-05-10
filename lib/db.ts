@@ -21,7 +21,11 @@ const storeInclude = {
   },
   brand: true,
   category: true,
-  area: true
+  area: true,
+  photos: {
+    orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
+    take: 8
+  }
 } satisfies Prisma.StoreInclude;
 
 type StoreWithRelations = Prisma.StoreGetPayload<{ include: typeof storeInclude }>;
@@ -97,7 +101,14 @@ function mapStore(store: StoreWithRelations): Store {
     remittanceSupport: store.remittanceSupport,
     priceRange: store.priceRange ?? "",
     featuredMenu: splitFeaturedMenu(store.featuredMenu),
-    photoUrl: store.photoUrl ?? "https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=1200&q=80",
+    photoUrl: store.photos[0]?.imageUrl ?? store.photoUrl ?? "https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=1200&q=80",
+    photos: store.photos.map((photo) => ({
+      id: photo.id,
+      imageUrl: photo.imageUrl,
+      altText: photo.altText ?? store.name,
+      sortOrder: photo.sortOrder,
+      isPrimary: photo.isPrimary
+    })),
     isPublished: store.isPublished,
     reviews: store.reviews.map((review) => ({
       id: review.id,

@@ -67,7 +67,7 @@ const stores = [
     remittanceSupport: false,
     priceRange: "¥¥",
     featuredMenu: "Pork Sisig, Chicken Adobo, Halo-Halo",
-    photoUrl: "https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=1200&q=80",
+    primaryPhotoUrl: "https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=1200&q=80",
     isPublished: true
   },
   {
@@ -92,7 +92,7 @@ const stores = [
     remittanceSupport: false,
     priceRange: "¥",
     featuredMenu: "Lucky Me, Datu Puti, Frozen Bangus",
-    photoUrl: "https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=1200&q=80",
+    primaryPhotoUrl: "https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=1200&q=80",
     isPublished: true
   },
   {
@@ -117,7 +117,7 @@ const stores = [
     remittanceSupport: true,
     priceRange: "Service fee varies",
     featuredMenu: "Bank transfer, Cash pickup, Parcel consultation",
-    photoUrl: "https://images.unsplash.com/photo-1560472355-536de3962603?auto=format&fit=crop&w=1200&q=80",
+    primaryPhotoUrl: "https://images.unsplash.com/photo-1560472355-536de3962603?auto=format&fit=crop&w=1200&q=80",
     isPublished: true
   },
   {
@@ -142,7 +142,7 @@ const stores = [
     remittanceSupport: false,
     priceRange: "¥¥",
     featuredMenu: "Lechon Kawali, Kare-Kare, Ube Cake",
-    photoUrl: "https://images.unsplash.com/photo-1569058242567-93de6f36f8eb?auto=format&fit=crop&w=1200&q=80",
+    primaryPhotoUrl: "https://images.unsplash.com/photo-1569058242567-93de6f36f8eb?auto=format&fit=crop&w=1200&q=80",
     isPublished: true
   }
 ];
@@ -210,7 +210,7 @@ async function main() {
       area.nameEn
     ].join(" ");
 
-    await prisma.store.upsert({
+    const upsertedStore = await prisma.store.upsert({
       where: { slug: store.slug },
       update: {
         brandId: brand.id,
@@ -233,7 +233,7 @@ async function main() {
         remittanceSupport: store.remittanceSupport,
         priceRange: store.priceRange,
         featuredMenu: store.featuredMenu,
-        photoUrl: store.photoUrl,
+        photoUrl: store.primaryPhotoUrl,
         isPublished: store.isPublished,
         searchText
       },
@@ -259,11 +259,42 @@ async function main() {
         remittanceSupport: store.remittanceSupport,
         priceRange: store.priceRange,
         featuredMenu: store.featuredMenu,
-        photoUrl: store.photoUrl,
+        photoUrl: store.primaryPhotoUrl,
         isPublished: store.isPublished,
         searchText
       }
     });
+
+    const existingPrimaryPhoto = await prisma.storePhoto.findFirst({
+      where: {
+        storeId: upsertedStore.id,
+        isPrimary: true
+      }
+    });
+
+    if (existingPrimaryPhoto) {
+      await prisma.storePhoto.update({
+        where: {
+          id: existingPrimaryPhoto.id
+        },
+        data: {
+          imageUrl: store.primaryPhotoUrl,
+          altText: store.name,
+          sortOrder: 0,
+          isPrimary: true
+        }
+      });
+    } else {
+      await prisma.storePhoto.create({
+        data: {
+          storeId: upsertedStore.id,
+          imageUrl: store.primaryPhotoUrl,
+          altText: store.name,
+          sortOrder: 0,
+          isPrimary: true
+        }
+      });
+    }
   }
 }
 

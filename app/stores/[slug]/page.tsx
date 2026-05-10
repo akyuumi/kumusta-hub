@@ -57,7 +57,7 @@ export default async function StoreDetailPage({
         </div>
         <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
           <div className="relative aspect-[16/10] overflow-hidden rounded-lg bg-[#efe8df]">
-            <Image src={store.photoUrl} alt="" fill priority sizes="(min-width: 1024px) 760px, 100vw" className="object-cover" />
+            <Image src={store.photoUrl} alt={store.photos[0]?.altText ?? ""} fill priority sizes="(min-width: 1024px) 760px, 100vw" className="object-cover" />
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
             <InfoTile label="Category" value={category?.nameEn ?? "Store"} href={category ? `/categories/${category.slug}` : undefined} />

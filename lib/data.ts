@@ -64,6 +64,15 @@ export const stores: Store[] = [
     priceRange: "¥¥",
     featuredMenu: ["Pork Sisig", "Chicken Adobo", "Halo-Halo"],
     photoUrl: "https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=1200&q=80",
+    photos: [
+      {
+        id: "store-photo-1",
+        imageUrl: "https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=1200&q=80",
+        altText: "Bayanihan Kitchen Ikebukuro",
+        sortOrder: 0,
+        isPrimary: true
+      }
+    ],
     isPublished: true,
     reviews: [
       {
@@ -108,6 +117,15 @@ export const stores: Store[] = [
     priceRange: "¥",
     featuredMenu: ["Lucky Me", "Datu Puti", "Frozen Bangus"],
     photoUrl: "https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=1200&q=80",
+    photos: [
+      {
+        id: "store-photo-2",
+        imageUrl: "https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=1200&q=80",
+        altText: "Sari-Sari Mart Kawasaki",
+        sortOrder: 0,
+        isPrimary: true
+      }
+    ],
     isPublished: true,
     reviews: [
       {
@@ -144,6 +162,15 @@ export const stores: Store[] = [
     priceRange: "Service fee varies",
     featuredMenu: ["Bank transfer", "Cash pickup", "Parcel consultation"],
     photoUrl: "https://images.unsplash.com/photo-1560472355-536de3962603?auto=format&fit=crop&w=1200&q=80",
+    photos: [
+      {
+        id: "store-photo-3",
+        imageUrl: "https://images.unsplash.com/photo-1560472355-536de3962603?auto=format&fit=crop&w=1200&q=80",
+        altText: "Padala Link Yokohama",
+        sortOrder: 0,
+        isPrimary: true
+      }
+    ],
     isPublished: true,
     reviews: []
   },
@@ -171,6 +198,15 @@ export const stores: Store[] = [
     priceRange: "¥¥",
     featuredMenu: ["Lechon Kawali", "Kare-Kare", "Ube Cake"],
     photoUrl: "https://images.unsplash.com/photo-1569058242567-93de6f36f8eb?auto=format&fit=crop&w=1200&q=80",
+    photos: [
+      {
+        id: "store-photo-4",
+        imageUrl: "https://images.unsplash.com/photo-1569058242567-93de6f36f8eb?auto=format&fit=crop&w=1200&q=80",
+        altText: "Bayanihan Kitchen Namba",
+        sortOrder: 0,
+        isPrimary: true
+      }
+    ],
     isPublished: true,
     reviews: []
   }

@@ -56,8 +56,17 @@ export type Store = {
   priceRange: string;
   featuredMenu: string[];
   photoUrl: string;
+  photos: StorePhoto[];
   isPublished: boolean;
   reviews: Review[];
+};
+
+export type StorePhoto = {
+  id: string;
+  imageUrl: string;
+  altText: string;
+  sortOrder: number;
+  isPrimary: boolean;
 };
 
 export type StoreSearchParams = {
