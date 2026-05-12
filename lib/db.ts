@@ -193,6 +193,55 @@ export async function getAdminStores(): Promise<Store[]> {
   }
 }
 
+export async function getFavoriteStores(userId: string): Promise<Store[]> {
+  if (!canUseDatabase()) return [];
+
+  try {
+    const favorites = await prisma.favorite.findMany({
+      where: {
+        userId,
+        store: {
+          isPublished: true
+        }
+      },
+      include: {
+        store: {
+          include: storeInclude
+        }
+      },
+      orderBy: {
+        id: "desc"
+      }
+    });
+
+    return favorites.map((favorite) => mapStore(favorite.store));
+  } catch {
+    return [];
+  }
+}
+
+export async function isFavoriteStore(userId: string, storeId: string) {
+  if (!canUseDatabase()) return false;
+
+  try {
+    const favorite = await prisma.favorite.findUnique({
+      where: {
+        userId_storeId: {
+          userId,
+          storeId
+        }
+      },
+      select: {
+        id: true
+      }
+    });
+
+    return Boolean(favorite);
+  } catch {
+    return false;
+  }
+}
+
 export async function searchStores(params: StoreSearchParams): Promise<Store[]> {
   if (!canUseDatabase()) return searchFallbackStores(params);
 

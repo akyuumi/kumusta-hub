@@ -105,6 +105,60 @@ export async function createReviewAction(formData: FormData) {
   redirect(`/stores/${slug}#reviews`);
 }
 
+export async function toggleFavoriteAction(formData: FormData) {
+  const slug = String(formData.get("slug") ?? "");
+
+  if (!slug) {
+    redirect("/search");
+  }
+
+  const user = await requireUser(`/stores/${slug}`);
+  const store = await prisma.store.findFirst({
+    where: {
+      slug,
+      isPublished: true
+    },
+    select: {
+      id: true
+    }
+  });
+
+  if (!store) {
+    redirect("/search");
+  }
+
+  const existingFavorite = await prisma.favorite.findUnique({
+    where: {
+      userId_storeId: {
+        userId: user.id,
+        storeId: store.id
+      }
+    },
+    select: {
+      id: true
+    }
+  });
+
+  if (existingFavorite) {
+    await prisma.favorite.delete({
+      where: {
+        id: existingFavorite.id
+      }
+    });
+  } else {
+    await prisma.favorite.create({
+      data: {
+        userId: user.id,
+        storeId: store.id
+      }
+    });
+  }
+
+  revalidatePath(`/stores/${slug}`);
+  revalidatePath("/mypage/favorites");
+  redirect(`/stores/${slug}`);
+}
+
 async function uploadReviewPhotos({ files, slug, userId }: { files: File[]; slug: string; userId: string }) {
   const supabase = await createClient();
 

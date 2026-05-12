@@ -5,9 +5,9 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { ExternalLink, Flag, Heart, MapPin, Phone, Star, ThumbsUp } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
-import { getArea, getBrand, getCategory, getStore, getStores } from "@/lib/db";
+import { getArea, getBrand, getCategory, getStore, getStores, isFavoriteStore } from "@/lib/db";
 import { formatRating } from "@/lib/utils";
-import { createReviewAction } from "./actions";
+import { createReviewAction, toggleFavoriteAction } from "./actions";
 
 export async function generateStaticParams() {
   const stores = await getStores();
@@ -44,6 +44,7 @@ export default async function StoreDetailPage({
   if (!store) notFound();
 
   const [area, category, brand, user, query] = await Promise.all([getArea(store.areaSlug), getCategory(store.categorySlug), getBrand(store.brandSlug), getCurrentUser(), searchParams]);
+  const isFavorite = user ? await isFavoriteStore(user.id, store.id) : false;
 
   return (
     <main>
@@ -163,10 +164,20 @@ export default async function StoreDetailPage({
 
         <aside className="space-y-4">
           <div className="rounded-lg border border-line bg-white p-5 shadow-sm">
-            <button className="mb-4 flex h-11 w-full items-center justify-center gap-2 rounded-md border border-line font-semibold hover:border-coral">
-              <Heart size={18} />
-              Save store
-            </button>
+            {user ? (
+              <form action={toggleFavoriteAction}>
+                <input type="hidden" name="slug" value={store.slug} />
+                <button className="mb-4 flex h-11 w-full items-center justify-center gap-2 rounded-md border border-line font-semibold hover:border-coral">
+                  <Heart size={18} className={isFavorite ? "fill-coral text-coral" : ""} />
+                  {isFavorite ? "Saved" : "Save store"}
+                </button>
+              </form>
+            ) : (
+              <Link href={`/login?next=/stores/${store.slug}`} className="mb-4 flex h-11 w-full items-center justify-center gap-2 rounded-md border border-line font-semibold hover:border-coral">
+                <Heart size={18} />
+                Save store
+              </Link>
+            )}
             <div className="space-y-3 text-sm">
               <p className="flex gap-2">
                 <MapPin size={18} className="shrink-0 text-bay" />
