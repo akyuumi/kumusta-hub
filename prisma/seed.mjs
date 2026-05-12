@@ -142,7 +142,7 @@ const stores = [
     remittanceSupport: false,
     priceRange: "¥¥",
     featuredMenu: "Lechon Kawali, Kare-Kare, Ube Cake",
-    primaryPhotoUrl: "https://images.unsplash.com/photo-1569058242567-93de6f36f8eb?auto=format&fit=crop&w=1200&q=80",
+    primaryPhotoUrl: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80",
     isPublished: true
   }
 ];
