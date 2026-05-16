@@ -82,7 +82,8 @@ export const stores: Store[] = [
         body: "The sisig tasted close to home. Staff helped us in Tagalog and Japanese.",
         helpfulCount: 12,
         createdAt: "2026-04-14",
-        photos: []
+        photos: [],
+        hasReported: false
       },
       {
         id: "review-2",
@@ -91,7 +92,8 @@ export const stores: Store[] = [
         body: "Good portions and friendly service. Gets busy after church on Sundays.",
         helpfulCount: 7,
         createdAt: "2026-03-28",
-        photos: []
+        photos: [],
+        hasReported: false
       }
     ]
   },
@@ -137,7 +139,8 @@ export const stores: Store[] = [
         body: "Small shop but has the essentials. Good frozen section.",
         helpfulCount: 5,
         createdAt: "2026-04-01",
-        photos: []
+        photos: [],
+        hasReported: false
       }
     ]
   },

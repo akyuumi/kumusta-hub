@@ -11,7 +11,7 @@ import {
   stores as fallbackStores
 } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
-import type { Area, Brand, Category, Store, StoreSearchParams } from "@/lib/types";
+import type { AdminReport, Area, Brand, Category, Store, StoreSearchParams } from "@/lib/types";
 
 const storeInclude = {
   reviews: {
@@ -19,7 +19,12 @@ const storeInclude = {
     orderBy: { createdAt: "desc" },
     take: 20,
     include: {
-      photos: true
+      photos: true,
+      reports: {
+        select: {
+          userId: true
+        }
+      }
     }
   },
   brand: true,
@@ -80,7 +85,7 @@ function stringifyOpeningHours(value: Prisma.JsonValue | null) {
   return typeof value === "string" ? value : JSON.stringify(value);
 }
 
-function mapStore(store: StoreWithRelations): Store {
+function mapStore(store: StoreWithRelations, currentUserId?: string): Store {
   return {
     id: store.id,
     slug: store.slug,
@@ -123,7 +128,8 @@ function mapStore(store: StoreWithRelations): Store {
       photos: review.photos.map((photo) => ({
         id: photo.id,
         imageUrl: photo.imageUrl
-      }))
+      })),
+      hasReported: currentUserId ? review.reports.some((report) => report.userId === currentUserId) : false
     }))
   };
 }
@@ -173,7 +179,7 @@ export async function getStores(): Promise<Store[]> {
       include: storeInclude,
       orderBy: [{ averageRating: "desc" }, { name: "asc" }]
     });
-    return stores.map(mapStore);
+    return stores.map((store) => mapStore(store));
   } catch {
     return fallbackStores;
   }
@@ -187,7 +193,7 @@ export async function getAdminStores(): Promise<Store[]> {
       include: storeInclude,
       orderBy: [{ isPublished: "desc" }, { name: "asc" }]
     });
-    return stores.map(mapStore);
+    return stores.map((store) => mapStore(store));
   } catch {
     return fallbackStores;
   }
@@ -215,6 +221,45 @@ export async function getFavoriteStores(userId: string): Promise<Store[]> {
     });
 
     return favorites.map((favorite) => mapStore(favorite.store));
+  } catch {
+    return [];
+  }
+}
+
+export async function getAdminReports(): Promise<AdminReport[]> {
+  if (!canUseDatabase()) return [];
+
+  try {
+    const reports = await prisma.report.findMany({
+      include: {
+        review: {
+          select: {
+            id: true,
+            body: true,
+            store: {
+              select: {
+                name: true,
+                slug: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+      take: 50
+    });
+
+    return reports.map((report) => ({
+      id: report.id,
+      reason: report.reason,
+      status: report.status,
+      createdAt: report.createdAt.toISOString().slice(0, 10),
+      reviewId: report.review.id,
+      reviewBody: report.review.body ?? "",
+      storeName: report.review.store.name,
+      storeSlug: report.review.store.slug,
+      reporterId: report.userId
+    }));
   } catch {
     return [];
   }
@@ -271,7 +316,7 @@ export async function searchStores(params: StoreSearchParams): Promise<Store[]> 
       orderBy: [{ averageRating: "desc" }, { name: "asc" }]
     });
 
-    return stores.map(mapStore);
+    return stores.map((store) => mapStore(store));
   } catch {
     return searchFallbackStores(params);
   }
@@ -286,6 +331,47 @@ export async function getStore(slug: string): Promise<Store | undefined> {
       include: storeInclude
     });
     return store ? mapStore(store) : undefined;
+  } catch {
+    return getFallbackStore(slug);
+  }
+}
+
+export async function getStoreForUser(slug: string, userId?: string): Promise<Store | undefined> {
+  if (!canUseDatabase()) return getFallbackStore(slug);
+
+  try {
+    const store = await prisma.store.findFirst({
+      where: { slug, isPublished: true },
+      include: {
+        ...storeInclude,
+        reviews: {
+          where: { isHidden: false },
+          orderBy: { createdAt: "desc" },
+          take: 20,
+          include: {
+            photos: true,
+            reports: userId
+              ? {
+                  where: {
+                    userId
+                  },
+                  select: {
+                    userId: true
+                  }
+                }
+              : {
+                  where: {
+                    id: "__never__"
+                  },
+                  select: {
+                    userId: true
+                  }
+                }
+          }
+        }
+      }
+    });
+    return store ? mapStore(store, userId) : undefined;
   } catch {
     return getFallbackStore(slug);
   }

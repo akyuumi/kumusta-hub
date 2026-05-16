@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/auth";
-import { getAdminStores, getAreas, getBrands, getCategories } from "@/lib/db";
-import { createStoreAction, uploadStorePhotoAction } from "./actions";
+import { getAdminReports, getAdminStores, getAreas, getBrands, getCategories } from "@/lib/db";
+import { createStoreAction, updateReportStatusAction, uploadStorePhotoAction } from "./actions";
 
 export const metadata: Metadata = {
   title: "Admin"
@@ -16,11 +16,7 @@ export default async function AdminPage({
   }>;
 }) {
   await requireAdmin();
-  const [areas, brands, categories, stores, params] = await Promise.all([getAreas(), getBrands(), getCategories(), getAdminStores(), searchParams]);
-  const reports = [
-    { id: "report-1", review: "review-2", reason: "Possible outdated information", status: "Open" },
-    { id: "report-2", review: "review-3", reason: "Duplicate review", status: "In review" }
-  ];
+  const [areas, brands, categories, stores, reports, params] = await Promise.all([getAreas(), getBrands(), getCategories(), getAdminStores(), getAdminReports(), searchParams]);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
@@ -28,6 +24,7 @@ export default async function AdminPage({
       <p className="mt-2 text-muted">MVP control surface for store, taxonomy, review, report, and user moderation workflows.</p>
       {params.status === "store_created" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store created.</p>}
       {params.status === "store_photo_uploaded" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store photo uploaded.</p>}
+      {params.status === "report_updated" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Report status updated.</p>}
       {params.error && <p className="mt-4 rounded-md bg-[#fff5ea] p-3 text-sm font-medium text-coral">{getAdminErrorMessage(params.error)}</p>}
       <div className="mt-6 grid gap-4 md:grid-cols-4">
         <Metric label="Stores" value={stores.length} />
@@ -176,17 +173,53 @@ export default async function AdminPage({
           </div>
         </form>
       </section>
-      <section className="mt-6 rounded-lg border border-line bg-white p-5">
+      <section id="reports" className="mt-6 rounded-lg border border-line bg-white p-5">
         <h2 className="font-bold text-ink">Reports</h2>
-        <div className="mt-4 grid gap-3">
-          {reports.map((report) => (
-            <div key={report.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-line p-3 text-sm">
-              <span className="font-medium">{report.review}</span>
-              <span className="text-muted">{report.reason}</span>
-              <span className="rounded-full bg-[#fff5ea] px-3 py-1 font-semibold">{report.status}</span>
-            </div>
-          ))}
-        </div>
+        {reports.length > 0 ? (
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[900px] text-left text-sm">
+              <thead className="bg-[#faf7f2] text-muted">
+                <tr>
+                  <th className="p-3">Store</th>
+                  <th className="p-3">Review</th>
+                  <th className="p-3">Reason</th>
+                  <th className="p-3">Reporter</th>
+                  <th className="p-3">Status</th>
+                  <th className="p-3">Created</th>
+                  <th className="p-3">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reports.map((report) => (
+                  <tr key={report.id} className="border-t border-line align-top">
+                    <td className="p-3 font-medium">{report.storeName}</td>
+                    <td className="max-w-xs p-3 text-muted">{report.reviewBody || "No body"}</td>
+                    <td className="p-3">{formatReportReason(report.reason)}</td>
+                    <td className="p-3 font-mono text-xs text-muted">{report.reporterId.slice(0, 8)}</td>
+                    <td className="p-3">
+                      <span className="rounded-full bg-[#fff5ea] px-3 py-1 font-semibold">{formatReportStatus(report.status)}</span>
+                    </td>
+                    <td className="p-3 text-muted">{report.createdAt}</td>
+                    <td className="p-3">
+                      <form action={updateReportStatusAction} className="flex gap-2">
+                        <input type="hidden" name="reportId" value={report.id} />
+                        <select name="status" defaultValue={report.status} className="h-9 rounded-md border border-line bg-white px-2">
+                          <option value="open">Open</option>
+                          <option value="in_review">In review</option>
+                          <option value="resolved">Resolved</option>
+                          <option value="rejected">Rejected</option>
+                        </select>
+                        <button className="h-9 rounded-md border border-line px-3 font-semibold">Update</button>
+                      </form>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="mt-4 rounded-md bg-[#faf7f2] p-4 text-sm text-muted">No reports yet.</p>
+        )}
       </section>
     </main>
   );
@@ -201,10 +234,34 @@ function getAdminErrorMessage(error: string) {
     invalid_store_photo_type: "Upload a JPEG, PNG, or WebP image.",
     store_photo_too_large: "Store photos must be 5 MB or less.",
     store_not_found: "Store was not found.",
-    store_photo_upload_failed: "Photo upload failed. Check the Supabase Storage bucket policy."
+    store_photo_upload_failed: "Photo upload failed. Check the Supabase Storage bucket policy.",
+    invalid_report_status: "Choose a valid report status."
   };
 
   return messages[error] ?? "Admin action failed.";
+}
+
+function formatReportReason(reason: string) {
+  const labels: Record<string, string> = {
+    incorrect_info: "Incorrect info",
+    spam: "Spam",
+    abuse: "Abuse",
+    duplicate: "Duplicate",
+    other: "Other"
+  };
+
+  return labels[reason] ?? reason;
+}
+
+function formatReportStatus(status: string) {
+  const labels: Record<string, string> = {
+    open: "Open",
+    in_review: "In review",
+    resolved: "Resolved",
+    rejected: "Rejected"
+  };
+
+  return labels[status] ?? status;
 }
 
 function Field({

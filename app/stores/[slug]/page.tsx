@@ -5,9 +5,9 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { ExternalLink, Flag, Heart, MapPin, Phone, Star, ThumbsUp } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
-import { getArea, getBrand, getCategory, getStore, getStores, isFavoriteStore } from "@/lib/db";
+import { getArea, getBrand, getCategory, getStore, getStoreForUser, getStores, isFavoriteStore } from "@/lib/db";
 import { formatRating } from "@/lib/utils";
-import { createReviewAction, toggleFavoriteAction } from "./actions";
+import { createReviewAction, reportReviewAction, toggleFavoriteAction } from "./actions";
 
 export async function generateStaticParams() {
   const stores = await getStores();
@@ -37,13 +37,15 @@ export default async function StoreDetailPage({
   params: Promise<{ slug: string }>;
   searchParams: Promise<{
     error?: string;
+    status?: string;
   }>;
 }) {
   const { slug } = await params;
-  const store = await getStore(slug);
+  const user = await getCurrentUser();
+  const store = await getStoreForUser(slug, user?.id);
   if (!store) notFound();
 
-  const [area, category, brand, user, query] = await Promise.all([getArea(store.areaSlug), getCategory(store.categorySlug), getBrand(store.brandSlug), getCurrentUser(), searchParams]);
+  const [area, category, brand, query] = await Promise.all([getArea(store.areaSlug), getCategory(store.categorySlug), getBrand(store.brandSlug), searchParams]);
   const isFavorite = user ? await isFavoriteStore(user.id, store.id) : false;
 
   return (
@@ -118,6 +120,9 @@ export default async function StoreDetailPage({
             {query.error === "invalid_review_photo_type" && <p className="mb-4 rounded-md bg-[#fff5ea] p-3 text-sm font-medium text-coral">Review photos must be JPEG, PNG, or WebP.</p>}
             {query.error === "review_photo_too_large" && <p className="mb-4 rounded-md bg-[#fff5ea] p-3 text-sm font-medium text-coral">Each review photo must be 5MB or less.</p>}
             {query.error === "review_photo_upload_failed" && <p className="mb-4 rounded-md bg-[#fff5ea] p-3 text-sm font-medium text-coral">Photo upload failed. Please try again.</p>}
+            {query.error === "invalid_report" && <p className="mb-4 rounded-md bg-[#fff5ea] p-3 text-sm font-medium text-coral">Choose a report reason.</p>}
+            {query.error === "review_not_found" && <p className="mb-4 rounded-md bg-[#fff5ea] p-3 text-sm font-medium text-coral">Review was not found.</p>}
+            {query.status === "report_submitted" && <p className="mb-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Report submitted.</p>}
             {user ? <ReviewForm slug={store.slug} /> : <p className="mb-4 rounded-md bg-[#faf7f2] p-4 text-sm text-muted">Login to write a review and help the community find reliable Filipino places in Japan.</p>}
             <div className="space-y-4">
               {store.reviews.length > 0 ? (
@@ -148,10 +153,31 @@ export default async function StoreDetailPage({
                         <ThumbsUp size={15} />
                         Helpful {review.helpfulCount}
                       </button>
-                      <button className="flex items-center gap-1 hover:text-ink">
-                        <Flag size={15} />
-                        Report
-                      </button>
+                      {user ? (
+                        <form action={reportReviewAction} className="flex flex-wrap items-center gap-2">
+                          <input type="hidden" name="slug" value={store.slug} />
+                          <input type="hidden" name="reviewId" value={review.id} />
+                          <select name="reason" defaultValue="" disabled={review.hasReported} className="h-8 rounded-md border border-line bg-white px-2 text-xs disabled:bg-[#faf7f2]">
+                            <option value="" disabled>
+                              Reason
+                            </option>
+                            <option value="incorrect_info">Incorrect info</option>
+                            <option value="spam">Spam</option>
+                            <option value="abuse">Abuse</option>
+                            <option value="duplicate">Duplicate</option>
+                            <option value="other">Other</option>
+                          </select>
+                          <button disabled={review.hasReported} className="flex items-center gap-1 hover:text-ink disabled:cursor-not-allowed disabled:text-muted">
+                            <Flag size={15} />
+                            {review.hasReported ? "Reported" : "Report"}
+                          </button>
+                        </form>
+                      ) : (
+                        <Link href={`/login?next=/stores/${store.slug}`} className="flex items-center gap-1 hover:text-ink">
+                          <Flag size={15} />
+                          Report
+                        </Link>
+                      )}
                     </div>
                   </article>
                 ))

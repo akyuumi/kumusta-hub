@@ -159,6 +159,61 @@ export async function toggleFavoriteAction(formData: FormData) {
   redirect(`/stores/${slug}`);
 }
 
+export async function reportReviewAction(formData: FormData) {
+  const slug = String(formData.get("slug") ?? "");
+  const reviewId = String(formData.get("reviewId") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
+
+  if (!slug) {
+    redirect("/search");
+  }
+
+  if (!reviewId || !isValidReportReason(reason)) {
+    redirect(`/stores/${slug}?error=invalid_report#reviews`);
+  }
+
+  const user = await requireUser(`/stores/${slug}`);
+  const review = await prisma.review.findFirst({
+    where: {
+      id: reviewId,
+      isHidden: false,
+      store: {
+        slug,
+        isPublished: true
+      }
+    },
+    select: {
+      id: true
+    }
+  });
+
+  if (!review) {
+    redirect(`/stores/${slug}?error=review_not_found#reviews`);
+  }
+
+  await prisma.report.upsert({
+    where: {
+      userId_reviewId: {
+        userId: user.id,
+        reviewId: review.id
+      }
+    },
+    update: {
+      reason,
+      status: "open"
+    },
+    create: {
+      userId: user.id,
+      reviewId: review.id,
+      reason
+    }
+  });
+
+  revalidatePath(`/stores/${slug}`);
+  revalidatePath("/admin");
+  redirect(`/stores/${slug}?status=report_submitted#reviews`);
+}
+
 async function uploadReviewPhotos({ files, slug, userId }: { files: File[]; slug: string; userId: string }) {
   const supabase = await createClient();
 
@@ -188,4 +243,8 @@ function getImageExtension(file: File) {
   if (file.type === "image/png") return "png";
   if (file.type === "image/webp") return "webp";
   return "jpg";
+}
+
+function isValidReportReason(reason: string) {
+  return ["incorrect_info", "spam", "abuse", "duplicate", "other"].includes(reason);
 }

@@ -31,6 +31,7 @@ export type Review = {
   helpfulCount: number;
   createdAt: string;
   photos: ReviewPhoto[];
+  hasReported: boolean;
 };
 
 export type ReviewPhoto = {
@@ -81,4 +82,16 @@ export type StoreSearchParams = {
   category?: string;
   rating?: string;
   tagalog?: string;
+};
+
+export type AdminReport = {
+  id: string;
+  reason: string;
+  status: string;
+  createdAt: string;
+  reviewId: string;
+  reviewBody: string;
+  storeName: string;
+  storeSlug: string;
+  reporterId: string;
 };

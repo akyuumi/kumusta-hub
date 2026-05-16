@@ -170,6 +170,28 @@ export async function uploadStorePhotoAction(formData: FormData) {
   redirect("/admin?status=store_photo_uploaded");
 }
 
+export async function updateReportStatusAction(formData: FormData) {
+  await requireAdmin();
+  const reportId = String(formData.get("reportId") ?? "");
+  const status = String(formData.get("status") ?? "");
+
+  if (!reportId || !isValidReportStatus(status)) {
+    redirect("/admin?error=invalid_report_status#reports");
+  }
+
+  await prisma.report.update({
+    where: {
+      id: reportId
+    },
+    data: {
+      status
+    }
+  });
+
+  revalidatePath("/admin");
+  redirect("/admin?status=report_updated#reports");
+}
+
 async function uploadStorePhotoFile({ file, slug }: { file: File; slug: string }) {
   const supabase = await createClient();
   await supabase.storage.createBucket(STORE_PHOTOS_BUCKET, {
@@ -223,4 +245,8 @@ function slugify(value: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function isValidReportStatus(status: string) {
+  return ["open", "in_review", "resolved", "rejected"].includes(status);
 }

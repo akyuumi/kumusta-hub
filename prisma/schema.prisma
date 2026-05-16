@@ -158,6 +158,7 @@ model Report {
   status    String   @default("open")
   createdAt DateTime @default(now()) @map("created_at")
 
+  @@unique([userId, reviewId])
   @@index([status])
   @@map("reports")
 }
