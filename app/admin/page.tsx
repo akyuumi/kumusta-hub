@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/auth";
-import { getAdminReports, getAdminReviews, getAdminStores, getAreas, getBrands, getCategories } from "@/lib/db";
-import { createStoreAction, updateReportStatusAction, updateReviewVisibilityAction, uploadStorePhotoAction } from "./actions";
+import { getAdminReports, getAdminReviews, getAdminStoreRequests, getAdminStores, getAreas, getBrands, getCategories } from "@/lib/db";
+import { approveStoreRequestAction, createStoreAction, rejectStoreRequestAction, updateReportStatusAction, updateReviewVisibilityAction, uploadStorePhotoAction } from "./actions";
 
 export const metadata: Metadata = {
   title: "Admin"
@@ -16,7 +16,16 @@ export default async function AdminPage({
   }>;
 }) {
   await requireAdmin();
-  const [areas, brands, categories, stores, reports, reviews, params] = await Promise.all([getAreas(), getBrands(), getCategories(), getAdminStores(), getAdminReports(), getAdminReviews(), searchParams]);
+  const [areas, brands, categories, stores, reports, reviews, storeRequests, params] = await Promise.all([
+    getAreas(),
+    getBrands(),
+    getCategories(),
+    getAdminStores(),
+    getAdminReports(),
+    getAdminReviews(),
+    getAdminStoreRequests(),
+    searchParams
+  ]);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
@@ -24,6 +33,8 @@ export default async function AdminPage({
       <p className="mt-2 text-muted">MVP control surface for store, taxonomy, review, report, and user moderation workflows.</p>
       {params.status === "store_created" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store created.</p>}
       {params.status === "store_photo_uploaded" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store photo uploaded.</p>}
+      {params.status === "store_request_approved" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store request approved.</p>}
+      {params.status === "store_request_rejected" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store request rejected.</p>}
       {params.status === "report_updated" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Report status updated.</p>}
       {params.status === "review_visibility_updated" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Review visibility updated.</p>}
       {params.error && <p className="mt-4 rounded-md bg-[#fff5ea] p-3 text-sm font-medium text-coral">{getAdminErrorMessage(params.error)}</p>}
@@ -142,6 +153,91 @@ export default async function AdminPage({
             </tbody>
           </table>
         </div>
+      </section>
+      <section id="store-requests" className="mt-6 rounded-lg border border-line bg-white p-5">
+        <h2 className="font-bold text-ink">Store requests</h2>
+        {storeRequests.length > 0 ? (
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[1180px] text-left text-sm">
+              <thead className="bg-[#faf7f2] text-muted">
+                <tr>
+                  <th className="p-3">Request</th>
+                  <th className="p-3">Taxonomy</th>
+                  <th className="p-3">Details</th>
+                  <th className="p-3">Requester</th>
+                  <th className="p-3">Status</th>
+                  <th className="p-3">Approve</th>
+                  <th className="p-3">Reject</th>
+                </tr>
+              </thead>
+              <tbody>
+                {storeRequests.map((request) => (
+                  <tr key={request.id} className="border-t border-line align-top">
+                    <td className="p-3">
+                      <p className="font-medium">{request.storeName}</p>
+                      <p className="mt-1 text-muted">{request.address}</p>
+                    </td>
+                    <td className="p-3">
+                      <p>{request.categoryName}</p>
+                      <p className="mt-1 text-muted">{request.areaName}</p>
+                    </td>
+                    <td className="max-w-xs p-3 text-muted">
+                      {request.url ? (
+                        <a href={request.url} className="font-medium text-bay underline" target="_blank" rel="noreferrer">
+                          Website
+                        </a>
+                      ) : (
+                        <span>No URL</span>
+                      )}
+                      <p className="mt-1">{request.notes || "No notes"}</p>
+                    </td>
+                    <td className="p-3">
+                      <p className="font-mono text-xs text-muted">{request.requesterId.slice(0, 8)}</p>
+                      <p className="mt-1 text-muted">{request.createdAt}</p>
+                    </td>
+                    <td className="p-3">
+                      <span className="rounded-full bg-[#fff5ea] px-3 py-1 font-semibold">{formatStoreRequestStatus(request.status)}</span>
+                      {request.rejectionReason && <p className="mt-2 text-xs text-muted">{request.rejectionReason}</p>}
+                    </td>
+                    <td className="p-3">
+                      {request.status !== "approved" ? (
+                        <form action={approveStoreRequestAction} className="grid min-w-56 gap-2">
+                          <input type="hidden" name="requestId" value={request.id} />
+                          <input name="slug" required defaultValue={slugify(request.storeName)} className="h-9 rounded-md border border-line px-2" placeholder="store-slug" />
+                          <div className="grid grid-cols-2 gap-2">
+                            <input name="lat" required type="number" step="any" className="h-9 rounded-md border border-line px-2" placeholder="Lat" />
+                            <input name="lng" required type="number" step="any" className="h-9 rounded-md border border-line px-2" placeholder="Lng" />
+                          </div>
+                          <textarea name="description" rows={2} className="rounded-md border border-line px-2 py-1" placeholder="Public description" />
+                          <label className="flex items-center gap-2 text-sm font-medium">
+                            <input type="checkbox" name="isPublished" />
+                            Published
+                          </label>
+                          <button className="h-9 rounded-md bg-coral px-3 font-semibold text-white">Approve</button>
+                        </form>
+                      ) : (
+                        <span className="text-muted">Approved</span>
+                      )}
+                    </td>
+                    <td className="p-3">
+                      {request.status !== "approved" ? (
+                        <form action={rejectStoreRequestAction} className="grid min-w-48 gap-2">
+                          <input type="hidden" name="requestId" value={request.id} />
+                          <textarea name="rejectionReason" rows={3} className="rounded-md border border-line px-2 py-1" placeholder="Reason" />
+                          <button className="h-9 rounded-md border border-line px-3 font-semibold">Reject</button>
+                        </form>
+                      ) : (
+                        <span className="text-muted">-</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="mt-4 rounded-md bg-[#faf7f2] p-4 text-sm text-muted">No store requests yet.</p>
+        )}
       </section>
       <section className="mt-6 rounded-lg border border-line bg-white p-5">
         <h2 className="font-bold text-ink">Store photos</h2>
@@ -292,6 +388,9 @@ function getAdminErrorMessage(error: string) {
     store_photo_too_large: "Store photos must be 5 MB or less.",
     store_not_found: "Store was not found.",
     store_photo_upload_failed: "Photo upload failed. Check the Supabase Storage bucket policy.",
+    invalid_store_request_approval: "Slug, latitude, and longitude are required to approve a store request.",
+    store_request_not_found: "Store request was not found or can no longer be changed.",
+    store_request_slug_exists: "A store with this slug already exists.",
     invalid_report_status: "Choose a valid report status.",
     review_not_found: "Review was not found."
   };
@@ -320,6 +419,24 @@ function formatReportStatus(status: string) {
   };
 
   return labels[status] ?? status;
+}
+
+function formatStoreRequestStatus(status: string) {
+  const labels: Record<string, string> = {
+    open: "Open",
+    approved: "Approved",
+    rejected: "Rejected"
+  };
+
+  return labels[status] ?? status;
+}
+
+function slugify(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 function Field({

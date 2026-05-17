@@ -109,3 +109,20 @@ export type AdminReview = {
   userId: string;
   reportCount: number;
 };
+
+export type AdminStoreRequest = {
+  id: string;
+  storeName: string;
+  address: string;
+  categoryId: string;
+  categoryName: string;
+  areaId: string;
+  areaName: string;
+  url: string;
+  notes: string;
+  status: string;
+  rejectionReason: string;
+  approvedStoreId: string;
+  requesterId: string;
+  createdAt: string;
+};

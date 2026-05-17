@@ -1,12 +1,12 @@
 # KumustaHub TASKS
 
-更新日: 2026-05-16
+更新日: 2026-05-17
 
 このファイルを実装タスク管理の正とする。完了したタスクは `[x]` に更新し、実装中に発見した追加タスクは `Backlog` に追加する。
 
 ## 現在地
 
-MVP は本番URLで動作しており、Supabase 本番DB、Googleログイン、口コミ投稿、口コミ写真、店舗写真、管理画面からの店舗追加、お気に入り保存まで実装済み。
+MVP は本番URLで動作しており、Supabase 本番DB、Googleログイン、口コミ投稿、口コミ写真、店舗写真、店舗追加申請、管理画面からの店舗追加、お気に入り保存まで実装済み。
 
 現状は **「本番DB接続済みのβ版」から「正式リリース可能な運用版」へ上げる段階**。
 
@@ -26,7 +26,7 @@ MVP は本番URLで動作しており、Supabase 本番DB、Googleログイン�
 | 口コミ写真投稿 | 完了 | 最大3枚、Storage保存 |
 | お気に入り | 完了 | 保存/解除、`/mypage/favorites` DB化 |
 | 店舗写真管理 | 完了 | admin upload、primary photo |
-| 店舗追加 | 部分完了 | admin Add Store + primary photo は実装済み |
+| 店舗追加 | 部分完了 | user申請、admin承認/却下、admin Add Store + primary photo は実装済み |
 | 通報 | 部分完了 | user通報、重複防止、admin status変更を実装済み |
 | 口コミモデレーション | 部分完了 | admin一覧、非表示/再表示、評価再集計を実装済み |
 | 容量試算 | 完了 | `docs/CAPACITY.md` |
@@ -120,23 +120,23 @@ MVP は本番URLで動作しており、Supabase 本番DB、Googleログイン�
 
 #### 4. 店舗追加申請
 
-状態: 画面のみ。DB保存は未実装。
+状態: 写真申請以外は完了。
 
 実装タスク:
 
-- [ ] 店舗追加申請テーブルを追加
-- [ ] `/store-request` のフォームを server action 化
-- [ ] 申請内容をDB保存
-- [ ] 申請者 user id を保存
-- [ ] admin画面に申請一覧を追加
-- [ ] adminが承認/却下できるようにする
-- [ ] 承認時に `stores` へ反映
+- [x] 店舗追加申請テーブルを追加
+- [x] `/store-request` のフォームを server action 化
+- [x] 申請内容をDB保存
+- [x] 申請者 user id を保存
+- [x] admin画面に申請一覧を追加
+- [x] adminが承認/却下できるようにする
+- [x] 承認時に `stores` へ反映
 - [ ] 必要なら申請写真もStorageへ保存
 
 完了条件:
 
-- [ ] user が店舗追加申請できる
-- [ ] admin が申請を承認し、公開/非公開店舗として登録できる
+- [x] user が店舗追加申請できる
+- [x] admin が申請を承認し、公開/非公開店舗として登録できる
 
 #### 5. 店舗管理CRUD
 

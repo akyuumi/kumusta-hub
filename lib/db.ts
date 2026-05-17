@@ -11,7 +11,7 @@ import {
   stores as fallbackStores
 } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
-import type { AdminReport, AdminReview, Area, Brand, Category, Store, StoreSearchParams } from "@/lib/types";
+import type { AdminReport, AdminReview, AdminStoreRequest, Area, Brand, Category, Store, StoreSearchParams } from "@/lib/types";
 
 const storeInclude = {
   reviews: {
@@ -301,6 +301,48 @@ export async function getAdminReviews(): Promise<AdminReview[]> {
       storeSlug: review.store.slug,
       userId: review.userId,
       reportCount: review._count.reports
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export async function getAdminStoreRequests(): Promise<AdminStoreRequest[]> {
+  if (!canUseDatabase()) return [];
+
+  try {
+    const requests = await prisma.storeRequest.findMany({
+      include: {
+        category: {
+          select: {
+            nameEn: true
+          }
+        },
+        area: {
+          select: {
+            nameEn: true
+          }
+        }
+      },
+      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+      take: 100
+    });
+
+    return requests.map((request) => ({
+      id: request.id,
+      storeName: request.storeName,
+      address: request.address,
+      categoryId: request.categoryId,
+      categoryName: request.category.nameEn,
+      areaId: request.areaId,
+      areaName: request.area.nameEn,
+      url: request.url ?? "",
+      notes: request.notes ?? "",
+      status: request.status,
+      rejectionReason: request.rejectionReason ?? "",
+      approvedStoreId: request.approvedStoreId ?? "",
+      requesterId: request.userId,
+      createdAt: request.createdAt.toISOString().slice(0, 10)
     }));
   } catch {
     return [];

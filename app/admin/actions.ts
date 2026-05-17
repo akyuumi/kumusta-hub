@@ -170,6 +170,121 @@ export async function uploadStorePhotoAction(formData: FormData) {
   redirect("/admin?status=store_photo_uploaded");
 }
 
+export async function approveStoreRequestAction(formData: FormData) {
+  await requireAdmin();
+  const requestId = String(formData.get("requestId") ?? "");
+  const slug = slugify(String(formData.get("slug") ?? ""));
+  const description = emptyToNull(formData.get("description"));
+  const lat = Number(formData.get("lat"));
+  const lng = Number(formData.get("lng"));
+  const isPublished = formData.get("isPublished") === "on";
+
+  if (!requestId || !slug || !Number.isFinite(lat) || !Number.isFinite(lng)) {
+    redirect("/admin?error=invalid_store_request_approval#store-requests");
+  }
+
+  const request = await prisma.storeRequest.findUnique({
+    where: { id: requestId },
+    include: {
+      category: {
+        select: {
+          nameEn: true
+        }
+      },
+      area: {
+        select: {
+          nameEn: true
+        }
+      }
+    }
+  });
+
+  if (!request || request.status === "approved") {
+    redirect("/admin?error=store_request_not_found#store-requests");
+  }
+
+  const existingStore = await prisma.store.findUnique({
+    where: { slug },
+    select: { id: true }
+  });
+
+  if (existingStore) {
+    redirect("/admin?error=store_request_slug_exists#store-requests");
+  }
+
+  const store = await prisma.$transaction(async (tx) => {
+    const createdStore = await tx.store.create({
+      data: {
+        slug,
+        categoryId: request.categoryId,
+        areaId: request.areaId,
+        name: request.storeName,
+        description,
+        address: request.address,
+        lat,
+        lng,
+        websiteUrl: request.url,
+        isPublished,
+        searchText: [request.storeName, description, request.address, request.notes, request.url, request.category.nameEn, request.area.nameEn].filter(Boolean).join(" ")
+      },
+      select: {
+        id: true,
+        slug: true
+      }
+    });
+
+    await tx.storeRequest.update({
+      where: { id: request.id },
+      data: {
+        status: "approved",
+        approvedStoreId: createdStore.id,
+        rejectionReason: null
+      }
+    });
+
+    return createdStore;
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/search");
+  revalidatePath(`/stores/${store.slug}`);
+  redirect("/admin?status=store_request_approved#store-requests");
+}
+
+export async function rejectStoreRequestAction(formData: FormData) {
+  await requireAdmin();
+  const requestId = String(formData.get("requestId") ?? "");
+  const rejectionReason = emptyToNull(formData.get("rejectionReason"));
+
+  if (!requestId) {
+    redirect("/admin?error=store_request_not_found#store-requests");
+  }
+
+  const request = await prisma.storeRequest.findUnique({
+    where: { id: requestId },
+    select: {
+      id: true,
+      status: true
+    }
+  });
+
+  if (!request || request.status === "approved") {
+    redirect("/admin?error=store_request_not_found#store-requests");
+  }
+
+  await prisma.storeRequest.update({
+    where: { id: request.id },
+    data: {
+      status: "rejected",
+      rejectionReason,
+      approvedStoreId: null
+    }
+  });
+
+  revalidatePath("/admin");
+  redirect("/admin?status=store_request_rejected#store-requests");
+}
+
 export async function updateReportStatusAction(formData: FormData) {
   await requireAdmin();
   const reportId = String(formData.get("reportId") ?? "");

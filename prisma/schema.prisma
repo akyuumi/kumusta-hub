@@ -28,6 +28,7 @@ model Category {
   nameJa           String     @map("name_ja")
   nameEn           String     @map("name_en")
   stores           Store[]
+  storeRequests    StoreRequest[]
 
   @@map("categories")
 }
@@ -50,6 +51,7 @@ model Area {
   nameJa       String     @map("name_ja")
   nameEn       String     @map("name_en")
   stores       Store[]
+  storeRequests StoreRequest[]
 
   @@map("areas")
 }
@@ -161,4 +163,26 @@ model Report {
   @@unique([userId, reviewId])
   @@index([status])
   @@map("reports")
+}
+
+model StoreRequest {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @map("user_id") @db.Uuid
+  storeName       String   @map("store_name")
+  address         String
+  categoryId      String   @map("category_id") @db.Uuid
+  category        Category @relation(fields: [categoryId], references: [id])
+  areaId          String   @map("area_id") @db.Uuid
+  area            Area     @relation(fields: [areaId], references: [id])
+  url             String?
+  notes           String?
+  status          String   @default("open")
+  rejectionReason String?  @map("rejection_reason")
+  approvedStoreId String?  @map("approved_store_id") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([status])
+  @@map("store_requests")
 }
