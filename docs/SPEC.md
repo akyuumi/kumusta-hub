@@ -1,4 +1,16 @@
+# KumustaHub SPEC
+
 在日フィリピン人向け店舗口コミサイト 要件定義書（MVP）
+
+このファイルをシステム仕様の正とする。
+
+関連ドキュメント:
+
+- `docs/TASKS.md`: タスク管理
+- `docs/DECISIONS.md`: 設計判断記録
+- `docs/CHANGELOG.md`: 変更履歴
+- `docs/AUTH_FLOW.md`: 認証フロー詳細
+- `docs/CAPACITY.md`: インフラ容量試算
 
 1. サービス概要
 
