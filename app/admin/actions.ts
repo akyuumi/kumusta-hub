@@ -440,6 +440,347 @@ export async function updateStoreArchiveAction(formData: FormData) {
   redirect(`/admin?status=${shouldArchive ? "store_archived" : "store_restored"}#store-management`);
 }
 
+export async function createBrandAction(formData: FormData) {
+  await requireAdmin();
+  const nameJa = String(formData.get("nameJa") ?? "").trim();
+  const nameEn = String(formData.get("nameEn") ?? "").trim();
+  const slug = slugify(String(formData.get("slug") ?? nameEn));
+  const description = emptyToNull(formData.get("description"));
+
+  if (!nameJa || !nameEn || !slug) {
+    redirect("/admin?error=missing_taxonomy_fields#taxonomy");
+  }
+
+  const existingBrand = await prisma.brand.findUnique({ where: { slug }, select: { id: true } });
+
+  if (existingBrand) {
+    redirect("/admin?error=taxonomy_slug_exists#taxonomy");
+  }
+
+  await prisma.brand.create({
+    data: {
+      slug,
+      nameJa,
+      nameEn,
+      description
+    }
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/search");
+  redirect("/admin?status=taxonomy_created#taxonomy");
+}
+
+export async function updateBrandAction(formData: FormData) {
+  await requireAdmin();
+  const brandId = String(formData.get("brandId") ?? "");
+  const nameJa = String(formData.get("nameJa") ?? "").trim();
+  const nameEn = String(formData.get("nameEn") ?? "").trim();
+  const slug = slugify(String(formData.get("slug") ?? nameEn));
+  const description = emptyToNull(formData.get("description"));
+
+  if (!brandId || !nameJa || !nameEn || !slug) {
+    redirect("/admin?error=missing_taxonomy_fields#taxonomy");
+  }
+
+  const [brand, slugOwner] = await Promise.all([
+    prisma.brand.findUnique({ where: { id: brandId }, select: { id: true, slug: true } }),
+    prisma.brand.findUnique({ where: { slug }, select: { id: true } })
+  ]);
+
+  if (!brand) {
+    redirect("/admin?error=taxonomy_not_found#taxonomy");
+  }
+
+  if (slugOwner && slugOwner.id !== brand.id) {
+    redirect("/admin?error=taxonomy_slug_exists#taxonomy");
+  }
+
+  await prisma.brand.update({
+    where: { id: brand.id },
+    data: {
+      slug,
+      nameJa,
+      nameEn,
+      description
+    }
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/search");
+  revalidatePath(`/brands/${brand.slug}`);
+  revalidatePath(`/brands/${slug}`);
+  redirect("/admin?status=taxonomy_updated#taxonomy");
+}
+
+export async function deleteBrandAction(formData: FormData) {
+  await requireAdmin();
+  const brandId = String(formData.get("brandId") ?? "");
+
+  if (!brandId) {
+    redirect("/admin?error=taxonomy_not_found#taxonomy");
+  }
+
+  const brand = await prisma.brand.findUnique({
+    where: { id: brandId },
+    select: {
+      id: true,
+      slug: true,
+      _count: {
+        select: {
+          stores: true
+        }
+      }
+    }
+  });
+
+  if (!brand) {
+    redirect("/admin?error=taxonomy_not_found#taxonomy");
+  }
+
+  if (brand._count.stores > 0) {
+    redirect("/admin?error=taxonomy_in_use#taxonomy");
+  }
+
+  await prisma.brand.delete({ where: { id: brand.id } });
+
+  revalidatePath("/admin");
+  revalidatePath("/search");
+  revalidatePath(`/brands/${brand.slug}`);
+  redirect("/admin?status=taxonomy_deleted#taxonomy");
+}
+
+export async function createCategoryAction(formData: FormData) {
+  await requireAdmin();
+  const nameJa = String(formData.get("nameJa") ?? "").trim();
+  const nameEn = String(formData.get("nameEn") ?? "").trim();
+  const slug = slugify(String(formData.get("slug") ?? nameEn));
+
+  if (!nameJa || !nameEn || !slug) {
+    redirect("/admin?error=missing_taxonomy_fields#taxonomy");
+  }
+
+  const existingCategory = await prisma.category.findUnique({ where: { slug }, select: { id: true } });
+
+  if (existingCategory) {
+    redirect("/admin?error=taxonomy_slug_exists#taxonomy");
+  }
+
+  await prisma.category.create({
+    data: {
+      slug,
+      nameJa,
+      nameEn
+    }
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/search");
+  redirect("/admin?status=taxonomy_created#taxonomy");
+}
+
+export async function updateCategoryAction(formData: FormData) {
+  await requireAdmin();
+  const categoryId = String(formData.get("categoryId") ?? "");
+  const nameJa = String(formData.get("nameJa") ?? "").trim();
+  const nameEn = String(formData.get("nameEn") ?? "").trim();
+  const slug = slugify(String(formData.get("slug") ?? nameEn));
+
+  if (!categoryId || !nameJa || !nameEn || !slug) {
+    redirect("/admin?error=missing_taxonomy_fields#taxonomy");
+  }
+
+  const [category, slugOwner] = await Promise.all([
+    prisma.category.findUnique({ where: { id: categoryId }, select: { id: true, slug: true } }),
+    prisma.category.findUnique({ where: { slug }, select: { id: true } })
+  ]);
+
+  if (!category) {
+    redirect("/admin?error=taxonomy_not_found#taxonomy");
+  }
+
+  if (slugOwner && slugOwner.id !== category.id) {
+    redirect("/admin?error=taxonomy_slug_exists#taxonomy");
+  }
+
+  await prisma.category.update({
+    where: { id: category.id },
+    data: {
+      slug,
+      nameJa,
+      nameEn
+    }
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/search");
+  revalidatePath(`/categories/${category.slug}`);
+  revalidatePath(`/categories/${slug}`);
+  redirect("/admin?status=taxonomy_updated#taxonomy");
+}
+
+export async function deleteCategoryAction(formData: FormData) {
+  await requireAdmin();
+  const categoryId = String(formData.get("categoryId") ?? "");
+
+  if (!categoryId) {
+    redirect("/admin?error=taxonomy_not_found#taxonomy");
+  }
+
+  const category = await prisma.category.findUnique({
+    where: { id: categoryId },
+    select: {
+      id: true,
+      slug: true,
+      _count: {
+        select: {
+          stores: true,
+          storeRequests: true,
+          children: true
+        }
+      }
+    }
+  });
+
+  if (!category) {
+    redirect("/admin?error=taxonomy_not_found#taxonomy");
+  }
+
+  if (category._count.stores > 0 || category._count.storeRequests > 0 || category._count.children > 0) {
+    redirect("/admin?error=taxonomy_in_use#taxonomy");
+  }
+
+  await prisma.category.delete({ where: { id: category.id } });
+
+  revalidatePath("/admin");
+  revalidatePath("/search");
+  revalidatePath(`/categories/${category.slug}`);
+  redirect("/admin?status=taxonomy_deleted#taxonomy");
+}
+
+export async function createAreaAction(formData: FormData) {
+  await requireAdmin();
+  const prefectureId = String(formData.get("prefectureId") ?? "");
+  const nameJa = String(formData.get("nameJa") ?? "").trim();
+  const nameEn = String(formData.get("nameEn") ?? "").trim();
+  const slug = slugify(String(formData.get("slug") ?? nameEn));
+
+  if (!prefectureId || !nameJa || !nameEn || !slug) {
+    redirect("/admin?error=missing_taxonomy_fields#taxonomy");
+  }
+
+  const [prefecture, existingArea] = await Promise.all([
+    prisma.prefecture.findUnique({ where: { id: prefectureId }, select: { id: true } }),
+    prisma.area.findUnique({ where: { slug }, select: { id: true } })
+  ]);
+
+  if (!prefecture) {
+    redirect("/admin?error=invalid_taxonomy_parent#taxonomy");
+  }
+
+  if (existingArea) {
+    redirect("/admin?error=taxonomy_slug_exists#taxonomy");
+  }
+
+  await prisma.area.create({
+    data: {
+      slug,
+      prefectureId,
+      nameJa,
+      nameEn
+    }
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/search");
+  redirect("/admin?status=taxonomy_created#taxonomy");
+}
+
+export async function updateAreaAction(formData: FormData) {
+  await requireAdmin();
+  const areaId = String(formData.get("areaId") ?? "");
+  const prefectureId = String(formData.get("prefectureId") ?? "");
+  const nameJa = String(formData.get("nameJa") ?? "").trim();
+  const nameEn = String(formData.get("nameEn") ?? "").trim();
+  const slug = slugify(String(formData.get("slug") ?? nameEn));
+
+  if (!areaId || !prefectureId || !nameJa || !nameEn || !slug) {
+    redirect("/admin?error=missing_taxonomy_fields#taxonomy");
+  }
+
+  const [area, prefecture, slugOwner] = await Promise.all([
+    prisma.area.findUnique({ where: { id: areaId }, select: { id: true, slug: true } }),
+    prisma.prefecture.findUnique({ where: { id: prefectureId }, select: { id: true } }),
+    prisma.area.findUnique({ where: { slug }, select: { id: true } })
+  ]);
+
+  if (!area) {
+    redirect("/admin?error=taxonomy_not_found#taxonomy");
+  }
+
+  if (!prefecture) {
+    redirect("/admin?error=invalid_taxonomy_parent#taxonomy");
+  }
+
+  if (slugOwner && slugOwner.id !== area.id) {
+    redirect("/admin?error=taxonomy_slug_exists#taxonomy");
+  }
+
+  await prisma.area.update({
+    where: { id: area.id },
+    data: {
+      slug,
+      prefectureId,
+      nameJa,
+      nameEn
+    }
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/search");
+  revalidatePath(`/areas/${area.slug}`);
+  revalidatePath(`/areas/${slug}`);
+  redirect("/admin?status=taxonomy_updated#taxonomy");
+}
+
+export async function deleteAreaAction(formData: FormData) {
+  await requireAdmin();
+  const areaId = String(formData.get("areaId") ?? "");
+
+  if (!areaId) {
+    redirect("/admin?error=taxonomy_not_found#taxonomy");
+  }
+
+  const area = await prisma.area.findUnique({
+    where: { id: areaId },
+    select: {
+      id: true,
+      slug: true,
+      _count: {
+        select: {
+          stores: true,
+          storeRequests: true
+        }
+      }
+    }
+  });
+
+  if (!area) {
+    redirect("/admin?error=taxonomy_not_found#taxonomy");
+  }
+
+  if (area._count.stores > 0 || area._count.storeRequests > 0) {
+    redirect("/admin?error=taxonomy_in_use#taxonomy");
+  }
+
+  await prisma.area.delete({ where: { id: area.id } });
+
+  revalidatePath("/admin");
+  revalidatePath("/search");
+  revalidatePath(`/areas/${area.slug}`);
+  redirect("/admin?status=taxonomy_deleted#taxonomy");
+}
+
 export async function approveStoreRequestAction(formData: FormData) {
   await requireAdmin();
   const requestId = String(formData.get("requestId") ?? "");

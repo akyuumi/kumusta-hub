@@ -9,8 +9,16 @@ export type Category = {
 
 export type Area = {
   id: string;
+  prefectureId?: string;
   slug: string;
   prefecture: string;
+  nameJa: string;
+  nameEn: string;
+};
+
+export type Prefecture = {
+  id: string;
+  slug: string;
   nameJa: string;
   nameEn: string;
 };

@@ -2,14 +2,23 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { Fragment } from "react";
 import { requireAdmin } from "@/lib/auth";
-import { getAdminReports, getAdminReviews, getAdminStoreRequests, getAdminStores, getAreas, getBrands, getCategories } from "@/lib/db";
+import { getAdminReports, getAdminReviews, getAdminStoreRequests, getAdminStores, getAreas, getBrands, getCategories, getPrefectures } from "@/lib/db";
 import {
   approveStoreRequestAction,
+  createAreaAction,
+  createBrandAction,
+  createCategoryAction,
   createStoreAction,
+  deleteAreaAction,
+  deleteBrandAction,
+  deleteCategoryAction,
   deleteStorePhotoAction,
   rejectStoreRequestAction,
   updateReportStatusAction,
   updateReviewVisibilityAction,
+  updateAreaAction,
+  updateBrandAction,
+  updateCategoryAction,
   updateStoreAction,
   updateStoreArchiveAction,
   updateStorePhotoPrimaryAction,
@@ -30,10 +39,11 @@ export default async function AdminPage({
   }>;
 }) {
   await requireAdmin();
-  const [areas, brands, categories, stores, reports, reviews, storeRequests, params] = await Promise.all([
+  const [areas, brands, categories, prefectures, stores, reports, reviews, storeRequests, params] = await Promise.all([
     getAreas(),
     getBrands(),
     getCategories(),
+    getPrefectures(),
     getAdminStores(),
     getAdminReports(),
     getAdminReviews(),
@@ -55,6 +65,9 @@ export default async function AdminPage({
       {params.status === "store_photo_deleted" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store photo deleted.</p>}
       {params.status === "store_request_approved" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store request approved.</p>}
       {params.status === "store_request_rejected" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store request rejected.</p>}
+      {params.status === "taxonomy_created" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Taxonomy created.</p>}
+      {params.status === "taxonomy_updated" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Taxonomy updated.</p>}
+      {params.status === "taxonomy_deleted" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Taxonomy deleted.</p>}
       {params.status === "report_updated" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Report status updated.</p>}
       {params.status === "review_visibility_updated" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Review visibility updated.</p>}
       {params.error && <p className="mt-4 rounded-md bg-[#fff5ea] p-3 text-sm font-medium text-coral">{getAdminErrorMessage(params.error)}</p>}
@@ -64,6 +77,123 @@ export default async function AdminPage({
         <Metric label="Categories" value={categories.length} />
         <Metric label="Areas" value={areas.length} />
       </div>
+      <section id="taxonomy" className="mt-6 rounded-lg border border-line bg-white p-5">
+        <h2 className="font-bold text-ink">Taxonomy management</h2>
+        <p className="mt-1 text-sm text-muted">Manage brands, categories, and areas used by store registration and search filters.</p>
+        <div className="mt-4 grid gap-5 xl:grid-cols-3">
+          <div className="rounded-md border border-line bg-[#faf7f2] p-4">
+            <h3 className="font-semibold text-ink">Brands</h3>
+            <form action={createBrandAction} className="mt-3 grid gap-3">
+              <AdminInput label="Name JA" name="nameJa" required />
+              <AdminInput label="Name EN" name="nameEn" required />
+              <AdminInput label="Slug" name="slug" />
+              <label className="space-y-1">
+                <span className="text-sm font-semibold">Description</span>
+                <textarea name="description" rows={2} className="w-full rounded-md border border-line bg-white px-3 py-2" />
+              </label>
+              <button className="h-10 rounded-md bg-coral px-4 text-sm font-semibold text-white">Add Brand</button>
+            </form>
+            <div className="mt-4 space-y-3">
+              {brands.map((brand) => (
+                <details key={brand.id} className="rounded-md border border-line bg-white p-3">
+                  <summary className="cursor-pointer font-medium">{brand.nameEn}</summary>
+                  <form action={updateBrandAction} className="mt-3 grid gap-3">
+                    <input type="hidden" name="brandId" value={brand.id} />
+                    <AdminInput label="Name JA" name="nameJa" required defaultValue={brand.nameJa} />
+                    <AdminInput label="Name EN" name="nameEn" required defaultValue={brand.nameEn} />
+                    <AdminInput label="Slug" name="slug" required defaultValue={brand.slug} />
+                    <label className="space-y-1">
+                      <span className="text-sm font-semibold">Description</span>
+                      <textarea name="description" rows={2} defaultValue={brand.description} className="w-full rounded-md border border-line bg-white px-3 py-2" />
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      <button className="h-9 rounded-md border border-line px-3 text-sm font-semibold">Save</button>
+                    </div>
+                  </form>
+                  <form action={deleteBrandAction} className="mt-2">
+                    <input type="hidden" name="brandId" value={brand.id} />
+                    <button className="h-9 rounded-md border border-line px-3 text-sm font-semibold text-coral">Delete</button>
+                  </form>
+                </details>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-md border border-line bg-[#faf7f2] p-4">
+            <h3 className="font-semibold text-ink">Categories</h3>
+            <form action={createCategoryAction} className="mt-3 grid gap-3">
+              <AdminInput label="Name JA" name="nameJa" required />
+              <AdminInput label="Name EN" name="nameEn" required />
+              <AdminInput label="Slug" name="slug" />
+              <button className="h-10 rounded-md bg-coral px-4 text-sm font-semibold text-white">Add Category</button>
+            </form>
+            <div className="mt-4 space-y-3">
+              {categories.map((category) => (
+                <details key={category.id} className="rounded-md border border-line bg-white p-3">
+                  <summary className="cursor-pointer font-medium">{category.nameEn}</summary>
+                  <form action={updateCategoryAction} className="mt-3 grid gap-3">
+                    <input type="hidden" name="categoryId" value={category.id} />
+                    <AdminInput label="Name JA" name="nameJa" required defaultValue={category.nameJa} />
+                    <AdminInput label="Name EN" name="nameEn" required defaultValue={category.nameEn} />
+                    <AdminInput label="Slug" name="slug" required defaultValue={category.slug} />
+                    <button className="h-9 rounded-md border border-line px-3 text-sm font-semibold">Save</button>
+                  </form>
+                  <form action={deleteCategoryAction} className="mt-2">
+                    <input type="hidden" name="categoryId" value={category.id} />
+                    <button className="h-9 rounded-md border border-line px-3 text-sm font-semibold text-coral">Delete</button>
+                  </form>
+                </details>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-md border border-line bg-[#faf7f2] p-4">
+            <h3 className="font-semibold text-ink">Areas</h3>
+            <form action={createAreaAction} className="mt-3 grid gap-3">
+              <label className="space-y-1">
+                <span className="text-sm font-semibold">Prefecture</span>
+                <select name="prefectureId" required className="h-11 w-full rounded-md border border-line bg-white px-3">
+                  {prefectures.map((prefecture) => (
+                    <option key={prefecture.id} value={prefecture.id}>
+                      {prefecture.nameEn}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <AdminInput label="Name JA" name="nameJa" required />
+              <AdminInput label="Name EN" name="nameEn" required />
+              <AdminInput label="Slug" name="slug" />
+              <button className="h-10 rounded-md bg-coral px-4 text-sm font-semibold text-white">Add Area</button>
+            </form>
+            <div className="mt-4 space-y-3">
+              {areas.map((area) => (
+                <details key={area.id} className="rounded-md border border-line bg-white p-3">
+                  <summary className="cursor-pointer font-medium">{area.nameEn}</summary>
+                  <form action={updateAreaAction} className="mt-3 grid gap-3">
+                    <input type="hidden" name="areaId" value={area.id} />
+                    <label className="space-y-1">
+                      <span className="text-sm font-semibold">Prefecture</span>
+                      <select name="prefectureId" required defaultValue={area.prefectureId} className="h-11 w-full rounded-md border border-line bg-white px-3">
+                        {prefectures.map((prefecture) => (
+                          <option key={prefecture.id} value={prefecture.id}>
+                            {prefecture.nameEn}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <AdminInput label="Name JA" name="nameJa" required defaultValue={area.nameJa} />
+                    <AdminInput label="Name EN" name="nameEn" required defaultValue={area.nameEn} />
+                    <AdminInput label="Slug" name="slug" required defaultValue={area.slug} />
+                    <button className="h-9 rounded-md border border-line px-3 text-sm font-semibold">Save</button>
+                  </form>
+                  <form action={deleteAreaAction} className="mt-2">
+                    <input type="hidden" name="areaId" value={area.id} />
+                    <button className="h-9 rounded-md border border-line px-3 text-sm font-semibold text-coral">Delete</button>
+                  </form>
+                </details>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
       <section id="add-store" className="mt-6 rounded-lg border border-line bg-white p-5">
         <h2 className="font-bold text-ink">Add Store</h2>
         <p className="mt-1 text-sm text-muted">Create a store and optionally register its primary photo in one step.</p>
@@ -560,6 +690,11 @@ function getAdminErrorMessage(error: string) {
     store_photo_not_found: "Store photo was not found.",
     store_photo_delete_failed: "Store photo deletion failed. Check the Supabase Storage bucket policy.",
     store_archived_cannot_publish: "Restore the store before publishing it.",
+    missing_taxonomy_fields: "Name and slug are required.",
+    taxonomy_slug_exists: "A taxonomy item with this slug already exists.",
+    taxonomy_not_found: "Taxonomy item was not found.",
+    taxonomy_in_use: "This taxonomy item is linked to stores or requests and cannot be deleted.",
+    invalid_taxonomy_parent: "Choose a valid parent taxonomy item.",
     invalid_store_request_approval: "Slug, latitude, and longitude are required to approve a store request.",
     store_request_not_found: "Store request was not found or can no longer be changed.",
     store_request_slug_exists: "A store with this slug already exists.",

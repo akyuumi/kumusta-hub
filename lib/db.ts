@@ -11,7 +11,7 @@ import {
   stores as fallbackStores
 } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
-import type { AdminReport, AdminReview, AdminStoreRequest, Area, Brand, Category, Store, StoreSearchParams } from "@/lib/types";
+import type { AdminReport, AdminReview, AdminStoreRequest, Area, Brand, Category, Prefecture, Store, StoreSearchParams } from "@/lib/types";
 
 const storeInclude = {
   reviews: {
@@ -51,13 +51,23 @@ function mapCategory(category: { id: string; slug: string; nameJa: string; nameE
   };
 }
 
-function mapArea(area: { id: string; slug: string; nameJa: string; nameEn: string; prefecture?: { nameEn: string } | null }): Area {
+function mapArea(area: { id: string; prefectureId?: string; slug: string; nameJa: string; nameEn: string; prefecture?: { nameEn: string } | null }): Area {
   return {
     id: area.id,
+    prefectureId: area.prefectureId,
     slug: area.slug,
     prefecture: area.prefecture?.nameEn ?? "Japan",
     nameJa: area.nameJa,
     nameEn: area.nameEn
+  };
+}
+
+function mapPrefecture(prefecture: { id: string; slug: string; nameJa: string; nameEn: string }): Prefecture {
+  return {
+    id: prefecture.id,
+    slug: prefecture.slug,
+    nameJa: prefecture.nameJa,
+    nameEn: prefecture.nameEn
   };
 }
 
@@ -161,6 +171,17 @@ export async function getAreas(): Promise<Area[]> {
     return areas.map(mapArea);
   } catch {
     return fallbackAreas;
+  }
+}
+
+export async function getPrefectures(): Promise<Prefecture[]> {
+  if (!canUseDatabase()) return [];
+
+  try {
+    const prefectures = await prisma.prefecture.findMany({ orderBy: { nameEn: "asc" } });
+    return prefectures.map(mapPrefecture);
+  } catch {
+    return [];
   }
 }
 
