@@ -224,3 +224,28 @@
 
 - 返信は `mailto:` リンクなどを使った手動対応。
 - 返信履歴や担当者メモは未実装。
+
+## 2026-05-18: SEO base URL は環境変数で差し替え可能にする
+
+決定事項:
+
+- SEO用のbase URLは `NEXT_PUBLIC_SITE_URL` を優先し、未設定時は `https://kumusta-hub.vercel.app` を使う。
+- `metadataBase`, canonical URL, sitemap, robots sitemap URL は同じbase URLから生成する。
+- 店舗詳細には `LocalBusiness` または `Restaurant` のJSON-LDを出力し、口コミがある場合は `AggregateRating` を含める。
+- OGP画像は当面、各店舗のprimary photoを使う。専用OGP画像制作は後続タスクに残す。
+
+理由:
+
+- 独自ドメイン確定前でも本番URLでSEO情報を破綻させない。
+- 独自ドメイン移行時に環境変数だけでURLを切り替えられる。
+- 店舗詳細ページは検索流入の中心になるため、構造化データを優先する。
+
+影響:
+
+- Vercel環境では `NEXT_PUBLIC_SITE_URL` を設定すればsitemap/robots/canonicalが差し替わる。
+- OGP画像の品質は店舗写真の品質に依存する。
+
+制約:
+
+- 専用OGP画像は未実装。
+- 外部URL画像の完全撤廃は初期データ/画像権利整理タスクで扱う。

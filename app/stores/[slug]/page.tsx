@@ -6,6 +6,8 @@ import type { ReactNode } from "react";
 import { ExternalLink, Flag, Heart, MapPin, Phone, Star, ThumbsUp } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { getArea, getBrand, getCategory, getStore, getStoreForUser, getStores, isFavoriteStore } from "@/lib/db";
+import { absoluteUrl } from "@/lib/site";
+import type { Store } from "@/lib/types";
 import { formatRating } from "@/lib/utils";
 import { createReviewAction, reportReviewAction, toggleFavoriteAction } from "./actions";
 
@@ -22,7 +24,18 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: store.name,
     description: store.description,
+    alternates: {
+      canonical: absoluteUrl(`/stores/${store.slug}`)
+    },
     openGraph: {
+      title: store.name,
+      description: store.description,
+      url: absoluteUrl(`/stores/${store.slug}`),
+      type: "article",
+      images: [store.photoUrl]
+    },
+    twitter: {
+      card: "summary_large_image",
       title: store.name,
       description: store.description,
       images: [store.photoUrl]
@@ -47,9 +60,11 @@ export default async function StoreDetailPage({
 
   const [area, category, brand, query] = await Promise.all([getArea(store.areaSlug), getCategory(store.categorySlug), getBrand(store.brandSlug), searchParams]);
   const isFavorite = user ? await isFavoriteStore(user.id, store.id) : false;
+  const jsonLd = buildStoreJsonLd({ store, areaName: area?.nameEn, categoryName: category?.nameEn });
 
   return (
     <main>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
         <div className="mb-5 flex flex-wrap items-center gap-2 text-sm text-muted">
           <Link href="/search">Search</Link>
@@ -237,6 +252,42 @@ export default async function StoreDetailPage({
       </section>
     </main>
   );
+}
+
+function buildStoreJsonLd({ store, areaName, categoryName }: { store: Store; areaName?: string; categoryName?: string }) {
+  const isRestaurant = store.categorySlug === "filipino-restaurant";
+  const jsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": isRestaurant ? "Restaurant" : "LocalBusiness",
+    "@id": absoluteUrl(`/stores/${store.slug}#localbusiness`),
+    name: store.name,
+    description: store.description,
+    image: store.photoUrl,
+    url: absoluteUrl(`/stores/${store.slug}`),
+    telephone: store.phone || undefined,
+    address: store.address,
+    areaServed: areaName,
+    category: categoryName,
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: store.lat,
+      longitude: store.lng
+    },
+    aggregateRating:
+      store.reviewCount > 0
+        ? {
+            "@type": "AggregateRating",
+            ratingValue: formatRating(store.averageRating),
+            reviewCount: store.reviewCount
+          }
+        : undefined
+  };
+
+  if (isRestaurant && store.priceRange) {
+    jsonLd.priceRange = store.priceRange;
+  }
+
+  return Object.fromEntries(Object.entries(jsonLd).filter(([, value]) => value !== undefined));
 }
 
 function Badge({ children }: { children: ReactNode }) {

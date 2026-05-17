@@ -2,11 +2,23 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { StoreCard } from "@/components/StoreCard";
 import { getBrand, getStores } from "@/lib/db";
+import { absoluteUrl } from "@/lib/site";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const brand = await getBrand(slug);
-  return brand ? { title: brand.nameEn, description: brand.description } : {};
+  return brand
+    ? {
+        title: brand.nameEn,
+        description: brand.description,
+        alternates: { canonical: absoluteUrl(`/brands/${brand.slug}`) },
+        openGraph: {
+          title: brand.nameEn,
+          description: brand.description,
+          url: absoluteUrl(`/brands/${brand.slug}`)
+        }
+      }
+    : {};
 }
 
 export default async function BrandPage({ params }: { params: Promise<{ slug: string }> }) {

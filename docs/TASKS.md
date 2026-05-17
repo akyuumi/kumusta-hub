@@ -197,24 +197,24 @@ MVP は本番URLで動作しており、Supabase 本番DB、Googleログイン�
 
 #### 8. SEO / OGP
 
-状態: 基本metadata、sitemap、robotsはあり。正式リリース水準では未完。
+状態: 基本完了。OGP専用画像制作と外部URL画像の完全撤廃は継続課題。
 
 実装タスク:
 
-- [ ] sitemap / robots の base URL を正式ドメインへ固定
-- [ ] canonical URL 追加
-- [ ] OGP画像方針を決定
-- [ ] 店舗詳細の JSON-LD
+- [x] sitemap / robots の base URL を正式ドメインへ固定
+- [x] canonical URL 追加
+- [x] OGP画像方針を決定
+- [x] 店舗詳細の JSON-LD
   - `LocalBusiness`
   - `Restaurant`
   - `AggregateRating`
-- [ ] エリア/カテゴリ/ブランドページの説明文改善
+- [x] エリア/カテゴリ/ブランドページの説明文改善
 - [ ] 外部URL画像の撤廃方針を反映
 
 完了条件:
 
-- [ ] 主要ページの title/meta/OGP/canonical が本番値
-- [ ] sitemap が正式URLで生成される
+- [x] 主要ページの title/meta/OGP/canonical が本番値
+- [x] sitemap が正式URLで生成される
 
 #### 9. 初期データ投入
 

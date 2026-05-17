@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Globe2, Menu, Search, UserRound } from "lucide-react";
 import { AuthNav } from "@/components/AuthNav";
+import { absoluteUrl, siteUrl } from "@/lib/site";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -10,11 +11,21 @@ export const metadata: Metadata = {
     template: "%s | KumustaHub"
   },
   description: "Search and review Filipino restaurants, groceries, remittance, and delivery services in Japan.",
-  metadataBase: new URL("https://kumustahub.example.com"),
+  metadataBase: new URL(siteUrl),
+  alternates: {
+    canonical: absoluteUrl("/")
+  },
   openGraph: {
     title: "KumustaHub",
     description: "Find Filipino community stores across Japan.",
+    url: absoluteUrl("/"),
+    siteName: "KumustaHub",
     type: "website"
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "KumustaHub",
+    description: "Find Filipino community stores across Japan."
   }
 };
 

@@ -6,6 +6,9 @@
 
 ### Added
 
+- canonical URL、OGP metadata、店舗詳細JSON-LDを追加。
+- sitemap / robots のbase URLを本番URL基準へ更新。
+- エリア、カテゴリ、ブランドページの説明文を改善。
 - 問い合わせフォームをDB保存する `contacts` テーブルを追加。
 - admin画面に問い合わせ一覧とstatus更新を追加。
 - 利用規約とプライバシーポリシーを正式リリース前提の文面へ更新。
