@@ -9,6 +9,7 @@
 - admin画面で店舗基本情報を編集できるようにした。
 - admin画面で店舗の公開/非公開を切り替えられるようにした。
 - admin画面で店舗写真のprimary切替と削除をできるようにした。
+- 店舗を物理削除せず archived 状態にできるようにした。
 - 店舗追加申請をDB保存する `store_requests` テーブルを追加。
 - `/store-request` の申請フォームを server action 化。
 - admin画面に店舗追加申請一覧、承認、却下を追加。

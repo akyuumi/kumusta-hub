@@ -122,6 +122,7 @@ function mapStore(store: StoreWithRelations, currentUserId?: string): Store {
       isPrimary: photo.isPrimary
     })),
     isPublished: store.isPublished,
+    archivedAt: store.archivedAt?.toISOString().slice(0, 10) ?? "",
     reviews: store.reviews.map((review) => ({
       id: review.id,
       authorName: "Community member",
@@ -179,7 +180,7 @@ export async function getStores(): Promise<Store[]> {
 
   try {
     const stores = await prisma.store.findMany({
-      where: { isPublished: true },
+      where: { isPublished: true, archivedAt: null },
       include: storeInclude,
       orderBy: [{ averageRating: "desc" }, { name: "asc" }]
     });
@@ -195,7 +196,7 @@ export async function getAdminStores(): Promise<Store[]> {
   try {
     const stores = await prisma.store.findMany({
       include: storeInclude,
-      orderBy: [{ isPublished: "desc" }, { name: "asc" }]
+      orderBy: [{ archivedAt: "asc" }, { isPublished: "desc" }, { name: "asc" }]
     });
     return stores.map((store) => mapStore(store));
   } catch {
@@ -211,7 +212,8 @@ export async function getFavoriteStores(userId: string): Promise<Store[]> {
       where: {
         userId,
         store: {
-          isPublished: true
+          isPublished: true,
+          archivedAt: null
         }
       },
       include: {
@@ -385,6 +387,7 @@ export async function searchStores(params: StoreSearchParams): Promise<Store[]> 
     const stores = await prisma.store.findMany({
       where: {
         isPublished: true,
+        archivedAt: null,
         ...(params.area ? { area: { slug: params.area } } : {}),
         ...(params.category ? { category: { slug: params.category } } : {}),
         ...(params.tagalog === "true" ? { tagalogSupport: true } : {}),
@@ -415,7 +418,7 @@ export async function getStore(slug: string): Promise<Store | undefined> {
 
   try {
     const store = await prisma.store.findFirst({
-      where: { slug, isPublished: true },
+      where: { slug, isPublished: true, archivedAt: null },
       include: storeInclude
     });
     return store ? mapStore(store) : undefined;
@@ -429,7 +432,7 @@ export async function getStoreForUser(slug: string, userId?: string): Promise<St
 
   try {
     const store = await prisma.store.findFirst({
-      where: { slug, isPublished: true },
+      where: { slug, isPublished: true, archivedAt: null },
       include: {
         ...storeInclude,
         reviews: {

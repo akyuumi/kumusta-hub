@@ -326,7 +326,7 @@ export async function updateStoreAction(formData: FormData) {
   }
 
   const [store, category, area, brand, slugOwner] = await Promise.all([
-    prisma.store.findUnique({ where: { id: storeId }, select: { id: true, slug: true } }),
+    prisma.store.findUnique({ where: { id: storeId }, select: { id: true, slug: true, archivedAt: true } }),
     prisma.category.findUnique({ where: { id: categoryId }, select: { nameEn: true } }),
     prisma.area.findUnique({ where: { id: areaId }, select: { nameEn: true } }),
     brandId ? prisma.brand.findUnique({ where: { id: brandId }, select: { nameEn: true } }) : null,
@@ -343,6 +343,10 @@ export async function updateStoreAction(formData: FormData) {
 
   if (slugOwner && slugOwner.id !== store.id) {
     redirect("/admin?error=store_slug_exists#store-management");
+  }
+
+  if (store.archivedAt && isPublished) {
+    redirect("/admin?error=store_archived_cannot_publish#store-management");
   }
 
   const searchText = [name, description, address, featuredMenu, brand?.nameEn, category.nameEn, area.nameEn].filter(Boolean).join(" ");
@@ -390,6 +394,19 @@ export async function updateStorePublicationAction(formData: FormData) {
     redirect("/admin?error=store_not_found#store-management");
   }
 
+  const existingStore = await prisma.store.findUnique({
+    where: { id: storeId },
+    select: { archivedAt: true }
+  });
+
+  if (!existingStore) {
+    redirect("/admin?error=store_not_found#store-management");
+  }
+
+  if (existingStore.archivedAt && isPublished) {
+    redirect("/admin?error=store_archived_cannot_publish#store-management");
+  }
+
   const store = await prisma.store.update({
     where: { id: storeId },
     data: { isPublished },
@@ -400,6 +417,27 @@ export async function updateStorePublicationAction(formData: FormData) {
   revalidatePath("/search");
   revalidatePath(`/stores/${store.slug}`);
   redirect("/admin?status=store_visibility_updated#store-management");
+}
+
+export async function updateStoreArchiveAction(formData: FormData) {
+  await requireAdmin();
+  const storeId = String(formData.get("storeId") ?? "");
+  const shouldArchive = formData.get("archive") === "true";
+
+  if (!storeId) {
+    redirect("/admin?error=store_not_found#store-management");
+  }
+
+  const store = await prisma.store.update({
+    where: { id: storeId },
+    data: shouldArchive ? { archivedAt: new Date(), isPublished: false } : { archivedAt: null },
+    select: { slug: true }
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/search");
+  revalidatePath(`/stores/${store.slug}`);
+  redirect(`/admin?status=${shouldArchive ? "store_archived" : "store_restored"}#store-management`);
 }
 
 export async function approveStoreRequestAction(formData: FormData) {

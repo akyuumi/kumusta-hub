@@ -74,7 +74,8 @@ export async function createReviewAction(formData: FormData) {
   const store = await prisma.store.findFirst({
     where: {
       slug,
-      isPublished: true
+      isPublished: true,
+      archivedAt: null
     },
     select: {
       id: true
@@ -142,7 +143,8 @@ export async function toggleFavoriteAction(formData: FormData) {
   const store = await prisma.store.findFirst({
     where: {
       slug,
-      isPublished: true
+      isPublished: true,
+      archivedAt: null
     },
     select: {
       id: true
@@ -205,7 +207,8 @@ export async function reportReviewAction(formData: FormData) {
       isHidden: false,
       store: {
         slug,
-        isPublished: true
+        isPublished: true,
+        archivedAt: null
       }
     },
     select: {

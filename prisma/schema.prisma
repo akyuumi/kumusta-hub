@@ -84,6 +84,7 @@ model Store {
   featuredMenu      String?   @map("featured_menu")
   photoUrl          String?   @map("photo_url")
   isPublished       Boolean   @default(false) @map("is_published")
+  archivedAt        DateTime? @map("archived_at")
   searchText        String?   @map("search_text")
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")
@@ -94,6 +95,7 @@ model Store {
   @@index([categoryId])
   @@index([areaId])
   @@index([isPublished])
+  @@index([archivedAt])
   @@map("stores")
 }
 

@@ -68,6 +68,7 @@ export type Store = {
   photoUrl: string;
   photos: StorePhoto[];
   isPublished: boolean;
+  archivedAt?: string;
   reviews: Review[];
 };
 

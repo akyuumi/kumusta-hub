@@ -11,6 +11,7 @@ import {
   updateReportStatusAction,
   updateReviewVisibilityAction,
   updateStoreAction,
+  updateStoreArchiveAction,
   updateStorePhotoPrimaryAction,
   updateStorePublicationAction,
   uploadStorePhotoAction
@@ -47,6 +48,8 @@ export default async function AdminPage({
       {params.status === "store_created" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store created.</p>}
       {params.status === "store_updated" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store updated.</p>}
       {params.status === "store_visibility_updated" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store visibility updated.</p>}
+      {params.status === "store_archived" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store archived.</p>}
+      {params.status === "store_restored" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store restored.</p>}
       {params.status === "store_photo_uploaded" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store photo uploaded.</p>}
       {params.status === "store_photo_primary_updated" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Primary store photo updated.</p>}
       {params.status === "store_photo_deleted" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store photo deleted.</p>}
@@ -169,16 +172,32 @@ export default async function AdminPage({
                       {store.averageRating} ({store.reviewCount})
                     </td>
                     <td className="p-3">
-                      <span className={store.isPublished ? "rounded-full bg-[#eef7f4] px-3 py-1 font-semibold text-bay" : "rounded-full bg-[#fff5ea] px-3 py-1 font-semibold text-coral"}>
-                        {store.isPublished ? "Published" : "Hidden"}
+                      <span
+                        className={
+                          store.archivedAt
+                            ? "rounded-full bg-[#eee] px-3 py-1 font-semibold text-muted"
+                            : store.isPublished
+                              ? "rounded-full bg-[#eef7f4] px-3 py-1 font-semibold text-bay"
+                              : "rounded-full bg-[#fff5ea] px-3 py-1 font-semibold text-coral"
+                        }
+                      >
+                        {store.archivedAt ? "Archived" : store.isPublished ? "Published" : "Hidden"}
                       </span>
+                      {store.archivedAt && <p className="mt-2 text-xs text-muted">Archived {store.archivedAt}</p>}
                     </td>
                     <td className="p-3">
                       <div className="flex flex-wrap gap-2">
-                        <form action={updateStorePublicationAction}>
+                        {!store.archivedAt && (
+                          <form action={updateStorePublicationAction}>
+                            <input type="hidden" name="storeId" value={store.id} />
+                            <input type="hidden" name="isPublished" value={store.isPublished ? "false" : "true"} />
+                            <button className="h-9 rounded-md border border-line px-3 font-semibold">{store.isPublished ? "Hide" : "Publish"}</button>
+                          </form>
+                        )}
+                        <form action={updateStoreArchiveAction}>
                           <input type="hidden" name="storeId" value={store.id} />
-                          <input type="hidden" name="isPublished" value={store.isPublished ? "false" : "true"} />
-                          <button className="h-9 rounded-md border border-line px-3 font-semibold">{store.isPublished ? "Hide" : "Publish"}</button>
+                          <input type="hidden" name="archive" value={store.archivedAt ? "false" : "true"} />
+                          <button className="h-9 rounded-md border border-line px-3 font-semibold text-coral">{store.archivedAt ? "Restore" : "Archive"}</button>
                         </form>
                         <span className="inline-flex h-9 items-center rounded-md border border-line px-3 font-semibold text-muted">Edit below</span>
                       </div>
@@ -540,6 +559,7 @@ function getAdminErrorMessage(error: string) {
     store_photo_upload_failed: "Photo upload failed. Check the Supabase Storage bucket policy.",
     store_photo_not_found: "Store photo was not found.",
     store_photo_delete_failed: "Store photo deletion failed. Check the Supabase Storage bucket policy.",
+    store_archived_cannot_publish: "Restore the store before publishing it.",
     invalid_store_request_approval: "Slug, latitude, and longitude are required to approve a store request.",
     store_request_not_found: "Store request was not found or can no longer be changed.",
     store_request_slug_exists: "A store with this slug already exists.",
