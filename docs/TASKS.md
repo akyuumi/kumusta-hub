@@ -97,20 +97,20 @@ MVP は本番URLで動作しており、Supabase 本番DB、Googleログイン�
 
 #### 3. 投稿・画像アップロードの abuse 対策
 
-状態: 未着手
+状態: 基本的な user単位 rate limit は完了。Captchaと画像UX改善は継続課題。
 
 実装タスク:
 
-- [ ] 口コミ投稿の user単位 rate limit
-- [ ] 口コミ写真アップロードの user単位 rate limit
-- [ ] 店舗追加申請の user単位 rate limit
-- [ ] Turnstile または reCAPTCHA 導入方針決定
+- [x] 口コミ投稿の user単位 rate limit
+- [x] 口コミ写真アップロードの user単位 rate limit
+- [x] 店舗追加申請の user単位 rate limit
+- [x] Turnstile または reCAPTCHA 導入方針決定
 - [ ] 画像アップロードサイズのUX改善
 
 完了条件:
 
-- [ ] botや連投でDB/Storageが簡単に膨らまない
-- [ ] 投稿失敗時のエラーメッセージがユーザーに分かる
+- [x] botや連投でDB/Storageが簡単に膨らまない
+- [x] 投稿失敗時のエラーメッセージがユーザーに分かる
 
 ### Phase 2: 運営フローの完成
 

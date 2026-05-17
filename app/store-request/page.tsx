@@ -74,7 +74,8 @@ function Field({ label, name, required, placeholder }: { label: string; name: st
 function getErrorMessage(error: string) {
   const messages: Record<string, string> = {
     missing_fields: "Store name, address, category, and area are required.",
-    invalid_taxonomy: "Choose a valid category and area."
+    invalid_taxonomy: "Choose a valid category and area.",
+    store_request_rate_limited: "You have submitted several store requests recently. Please try again later."
   };
 
   return messages[error] ?? "Store request failed.";

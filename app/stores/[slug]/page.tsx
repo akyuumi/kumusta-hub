@@ -120,6 +120,8 @@ export default async function StoreDetailPage({
             {query.error === "invalid_review_photo_type" && <p className="mb-4 rounded-md bg-[#fff5ea] p-3 text-sm font-medium text-coral">Review photos must be JPEG, PNG, or WebP.</p>}
             {query.error === "review_photo_too_large" && <p className="mb-4 rounded-md bg-[#fff5ea] p-3 text-sm font-medium text-coral">Each review photo must be 5MB or less.</p>}
             {query.error === "review_photo_upload_failed" && <p className="mb-4 rounded-md bg-[#fff5ea] p-3 text-sm font-medium text-coral">Photo upload failed. Please try again.</p>}
+            {query.error === "review_rate_limited" && <p className="mb-4 rounded-md bg-[#fff5ea] p-3 text-sm font-medium text-coral">You have posted several reviews recently. Please try again later.</p>}
+            {query.error === "review_photo_rate_limited" && <p className="mb-4 rounded-md bg-[#fff5ea] p-3 text-sm font-medium text-coral">You have uploaded several review photos recently. Please try again later.</p>}
             {query.error === "invalid_report" && <p className="mb-4 rounded-md bg-[#fff5ea] p-3 text-sm font-medium text-coral">Choose a report reason.</p>}
             {query.error === "review_not_found" && <p className="mb-4 rounded-md bg-[#fff5ea] p-3 text-sm font-medium text-coral">Review was not found.</p>}
             {query.status === "report_submitted" && <p className="mb-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Report submitted.</p>}

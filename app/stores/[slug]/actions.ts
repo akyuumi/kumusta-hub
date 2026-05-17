@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { consumeUserRateLimit } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
 const REVIEW_PHOTOS_BUCKET = "review-photos";
@@ -44,6 +45,31 @@ export async function createReviewAction(formData: FormData) {
   }
 
   const user = await requireUser(`/stores/${slug}`);
+
+  const canPostReview = await consumeUserRateLimit({
+    userId: user.id,
+    action: "review:create",
+    limit: 5,
+    windowSeconds: 60 * 60
+  });
+
+  if (!canPostReview) {
+    redirect(`/stores/${slug}?error=review_rate_limited#reviews`);
+  }
+
+  if (photos.length > 0) {
+    const canUploadReviewPhotos = await consumeUserRateLimit({
+      userId: user.id,
+      action: "review_photo:upload",
+      limit: 12,
+      windowSeconds: 60 * 60,
+      quantity: photos.length
+    });
+
+    if (!canUploadReviewPhotos) {
+      redirect(`/stores/${slug}?error=review_photo_rate_limited#reviews`);
+    }
+  }
 
   const store = await prisma.store.findFirst({
     where: {

@@ -186,3 +186,14 @@ model StoreRequest {
   @@index([status])
   @@map("store_requests")
 }
+
+model RateLimitEvent {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  action    String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, action, createdAt])
+  @@map("rate_limit_events")
+}

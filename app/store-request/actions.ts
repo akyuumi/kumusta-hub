@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { consumeUserRateLimit } from "@/lib/rate-limit";
 
 export async function createStoreRequestAction(formData: FormData) {
   const user = await requireUser("/store-request");
@@ -16,6 +17,17 @@ export async function createStoreRequestAction(formData: FormData) {
 
   if (!storeName || !address || !categoryId || !areaId) {
     redirect("/store-request?error=missing_fields");
+  }
+
+  const canCreateRequest = await consumeUserRateLimit({
+    userId: user.id,
+    action: "store_request:create",
+    limit: 3,
+    windowSeconds: 24 * 60 * 60
+  });
+
+  if (!canCreateRequest) {
+    redirect("/store-request?error=store_request_rate_limited");
   }
 
   const [category, area] = await Promise.all([
