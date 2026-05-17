@@ -139,3 +139,14 @@ export type AdminStoreRequest = {
   requesterId: string;
   createdAt: string;
 };
+
+export type AdminContact = {
+  id: string;
+  userId: string;
+  email: string;
+  subject: string;
+  message: string;
+  kind: string;
+  status: string;
+  createdAt: string;
+};

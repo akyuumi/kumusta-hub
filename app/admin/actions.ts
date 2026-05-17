@@ -953,6 +953,24 @@ export async function updateReviewVisibilityAction(formData: FormData) {
   redirect(`/admin?status=review_visibility_updated#${returnTo === "reports" ? "reports" : "reviews"}`);
 }
 
+export async function updateContactStatusAction(formData: FormData) {
+  await requireAdmin();
+  const contactId = String(formData.get("contactId") ?? "");
+  const status = String(formData.get("status") ?? "");
+
+  if (!contactId || !isValidContactStatus(status)) {
+    redirect("/admin?error=invalid_contact_status#contacts");
+  }
+
+  await prisma.contact.update({
+    where: { id: contactId },
+    data: { status }
+  });
+
+  revalidatePath("/admin");
+  redirect("/admin?status=contact_updated#contacts");
+}
+
 async function uploadStorePhotoFile({ file, slug }: { file: File; slug: string }) {
   const supabase = await createClient();
   await supabase.storage.createBucket(STORE_PHOTOS_BUCKET, {
@@ -1009,6 +1027,10 @@ function slugify(value: string) {
 }
 
 function isValidReportStatus(status: string) {
+  return ["open", "in_review", "resolved", "rejected"].includes(status);
+}
+
+function isValidContactStatus(status: string) {
   return ["open", "in_review", "resolved", "rejected"].includes(status);
 }
 

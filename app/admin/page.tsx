@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { Fragment } from "react";
 import { requireAdmin } from "@/lib/auth";
-import { getAdminReports, getAdminReviews, getAdminStoreRequests, getAdminStores, getAreas, getBrands, getCategories, getPrefectures } from "@/lib/db";
+import { getAdminContacts, getAdminReports, getAdminReviews, getAdminStoreRequests, getAdminStores, getAreas, getBrands, getCategories, getPrefectures } from "@/lib/db";
 import {
   approveStoreRequestAction,
   createAreaAction,
@@ -19,6 +19,7 @@ import {
   updateAreaAction,
   updateBrandAction,
   updateCategoryAction,
+  updateContactStatusAction,
   updateStoreAction,
   updateStoreArchiveAction,
   updateStorePhotoPrimaryAction,
@@ -39,7 +40,7 @@ export default async function AdminPage({
   }>;
 }) {
   await requireAdmin();
-  const [areas, brands, categories, prefectures, stores, reports, reviews, storeRequests, params] = await Promise.all([
+  const [areas, brands, categories, prefectures, stores, reports, reviews, storeRequests, contacts, params] = await Promise.all([
     getAreas(),
     getBrands(),
     getCategories(),
@@ -48,6 +49,7 @@ export default async function AdminPage({
     getAdminReports(),
     getAdminReviews(),
     getAdminStoreRequests(),
+    getAdminContacts(),
     searchParams
   ]);
 
@@ -68,6 +70,7 @@ export default async function AdminPage({
       {params.status === "taxonomy_created" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Taxonomy created.</p>}
       {params.status === "taxonomy_updated" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Taxonomy updated.</p>}
       {params.status === "taxonomy_deleted" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Taxonomy deleted.</p>}
+      {params.status === "contact_updated" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Contact status updated.</p>}
       {params.status === "report_updated" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Report status updated.</p>}
       {params.status === "review_visibility_updated" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Review visibility updated.</p>}
       {params.error && <p className="mt-4 rounded-md bg-[#fff5ea] p-3 text-sm font-medium text-coral">{getAdminErrorMessage(params.error)}</p>}
@@ -629,6 +632,59 @@ export default async function AdminPage({
           <p className="mt-4 rounded-md bg-[#faf7f2] p-4 text-sm text-muted">No reports yet.</p>
         )}
       </section>
+      <section id="contacts" className="mt-6 rounded-lg border border-line bg-white p-5">
+        <h2 className="font-bold text-ink">Contacts</h2>
+        {contacts.length > 0 ? (
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[900px] text-left text-sm">
+              <thead className="bg-[#faf7f2] text-muted">
+                <tr>
+                  <th className="p-3">Subject</th>
+                  <th className="p-3">Message</th>
+                  <th className="p-3">Kind</th>
+                  <th className="p-3">Email</th>
+                  <th className="p-3">Status</th>
+                  <th className="p-3">Created</th>
+                  <th className="p-3">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {contacts.map((contact) => (
+                  <tr key={contact.id} className="border-t border-line align-top">
+                    <td className="p-3 font-medium">{contact.subject}</td>
+                    <td className="max-w-md whitespace-pre-wrap p-3 text-muted">{contact.message}</td>
+                    <td className="p-3">{formatContactKind(contact.kind)}</td>
+                    <td className="p-3">
+                      <a href={`mailto:${contact.email}`} className="font-medium text-bay underline">
+                        {contact.email}
+                      </a>
+                      {contact.userId && <p className="mt-1 font-mono text-xs text-muted">{contact.userId.slice(0, 8)}</p>}
+                    </td>
+                    <td className="p-3">
+                      <span className="rounded-full bg-[#fff5ea] px-3 py-1 font-semibold">{formatReportStatus(contact.status)}</span>
+                    </td>
+                    <td className="p-3 text-muted">{contact.createdAt}</td>
+                    <td className="p-3">
+                      <form action={updateContactStatusAction} className="flex gap-2">
+                        <input type="hidden" name="contactId" value={contact.id} />
+                        <select name="status" defaultValue={contact.status} className="h-9 rounded-md border border-line bg-white px-2">
+                          <option value="open">Open</option>
+                          <option value="in_review">In review</option>
+                          <option value="resolved">Resolved</option>
+                          <option value="rejected">Rejected</option>
+                        </select>
+                        <button className="h-9 rounded-md border border-line px-3 font-semibold">Update</button>
+                      </form>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="mt-4 rounded-md bg-[#faf7f2] p-4 text-sm text-muted">No contacts yet.</p>
+        )}
+      </section>
       <section id="reviews" className="mt-6 rounded-lg border border-line bg-white p-5">
         <h2 className="font-bold text-ink">Reviews</h2>
         {reviews.length > 0 ? (
@@ -695,6 +751,7 @@ function getAdminErrorMessage(error: string) {
     taxonomy_not_found: "Taxonomy item was not found.",
     taxonomy_in_use: "This taxonomy item is linked to stores or requests and cannot be deleted.",
     invalid_taxonomy_parent: "Choose a valid parent taxonomy item.",
+    invalid_contact_status: "Choose a valid contact status.",
     invalid_store_request_approval: "Slug, latitude, and longitude are required to approve a store request.",
     store_request_not_found: "Store request was not found or can no longer be changed.",
     store_request_slug_exists: "A store with this slug already exists.",
@@ -726,6 +783,18 @@ function formatReportStatus(status: string) {
   };
 
   return labels[status] ?? status;
+}
+
+function formatContactKind(kind: string) {
+  const labels: Record<string, string> = {
+    general: "General",
+    store_correction: "Store correction",
+    deletion_request: "Deletion request",
+    moderation: "Moderation",
+    partnership: "Partnership"
+  };
+
+  return labels[kind] ?? kind;
 }
 
 function formatStoreRequestStatus(status: string) {

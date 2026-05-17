@@ -11,7 +11,7 @@ import {
   stores as fallbackStores
 } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
-import type { AdminReport, AdminReview, AdminStoreRequest, Area, Brand, Category, Prefecture, Store, StoreSearchParams } from "@/lib/types";
+import type { AdminContact, AdminReport, AdminReview, AdminStoreRequest, Area, Brand, Category, Prefecture, Store, StoreSearchParams } from "@/lib/types";
 
 const storeInclude = {
   reviews: {
@@ -370,6 +370,30 @@ export async function getAdminStoreRequests(): Promise<AdminStoreRequest[]> {
       approvedStoreId: request.approvedStoreId ?? "",
       requesterId: request.userId,
       createdAt: request.createdAt.toISOString().slice(0, 10)
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export async function getAdminContacts(): Promise<AdminContact[]> {
+  if (!canUseDatabase()) return [];
+
+  try {
+    const contacts = await prisma.contact.findMany({
+      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+      take: 100
+    });
+
+    return contacts.map((contact) => ({
+      id: contact.id,
+      userId: contact.userId ?? "",
+      email: contact.email,
+      subject: contact.subject,
+      message: contact.message,
+      kind: contact.kind,
+      status: contact.status,
+      createdAt: contact.createdAt.toISOString().slice(0, 10)
     }));
   } catch {
     return [];
