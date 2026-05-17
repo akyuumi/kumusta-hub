@@ -170,6 +170,133 @@ export async function uploadStorePhotoAction(formData: FormData) {
   redirect("/admin?status=store_photo_uploaded");
 }
 
+export async function updateStorePhotoPrimaryAction(formData: FormData) {
+  await requireAdmin();
+  const photoId = String(formData.get("photoId") ?? "");
+
+  if (!photoId) {
+    redirect("/admin?error=store_photo_not_found#store-photos");
+  }
+
+  const photo = await prisma.storePhoto.findUnique({
+    where: { id: photoId },
+    select: {
+      id: true,
+      storeId: true,
+      imageUrl: true,
+      store: {
+        select: {
+          slug: true
+        }
+      }
+    }
+  });
+
+  if (!photo) {
+    redirect("/admin?error=store_photo_not_found#store-photos");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.storePhoto.updateMany({
+      where: { storeId: photo.storeId },
+      data: { isPrimary: false }
+    });
+
+    await tx.storePhoto.update({
+      where: { id: photo.id },
+      data: { isPrimary: true }
+    });
+
+    await tx.store.update({
+      where: { id: photo.storeId },
+      data: { photoUrl: photo.imageUrl }
+    });
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/search");
+  revalidatePath(`/stores/${photo.store.slug}`);
+  redirect("/admin?status=store_photo_primary_updated#store-photos");
+}
+
+export async function deleteStorePhotoAction(formData: FormData) {
+  await requireAdmin();
+  const photoId = String(formData.get("photoId") ?? "");
+
+  if (!photoId) {
+    redirect("/admin?error=store_photo_not_found#store-photos");
+  }
+
+  const photo = await prisma.storePhoto.findUnique({
+    where: { id: photoId },
+    select: {
+      id: true,
+      storeId: true,
+      storagePath: true,
+      store: {
+        select: {
+          slug: true
+        }
+      }
+    }
+  });
+
+  if (!photo) {
+    redirect("/admin?error=store_photo_not_found#store-photos");
+  }
+
+  if (photo.storagePath) {
+    const supabase = await createClient();
+    const { error } = await supabase.storage.from(STORE_PHOTOS_BUCKET).remove([photo.storagePath]);
+
+    if (error) {
+      redirect("/admin?error=store_photo_delete_failed#store-photos");
+    }
+  }
+
+  const nextPhoto = await prisma.$transaction(async (tx) => {
+    await tx.storePhoto.delete({
+      where: { id: photo.id }
+    });
+
+    const remainingPrimary = await tx.storePhoto.findFirst({
+      where: { storeId: photo.storeId, isPrimary: true },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      select: { id: true, imageUrl: true }
+    });
+
+    const fallbackPhoto =
+      remainingPrimary ??
+      (await tx.storePhoto.findFirst({
+        where: { storeId: photo.storeId },
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+        select: { id: true, imageUrl: true }
+      }));
+
+    if (fallbackPhoto && !remainingPrimary) {
+      await tx.storePhoto.update({
+        where: { id: fallbackPhoto.id },
+        data: { isPrimary: true }
+      });
+    }
+
+    await tx.store.update({
+      where: { id: photo.storeId },
+      data: { photoUrl: fallbackPhoto?.imageUrl ?? null }
+    });
+
+    return fallbackPhoto;
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/search");
+  revalidatePath(`/stores/${photo.store.slug}`);
+  if (nextPhoto) {
+    revalidatePath(`/stores/${photo.store.slug}`);
+  }
+  redirect("/admin?status=store_photo_deleted#store-photos");
+}
+
 export async function updateStoreAction(formData: FormData) {
   await requireAdmin();
   const storeId = String(formData.get("storeId") ?? "");

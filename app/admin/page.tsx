@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { Fragment } from "react";
 import { requireAdmin } from "@/lib/auth";
 import { getAdminReports, getAdminReviews, getAdminStoreRequests, getAdminStores, getAreas, getBrands, getCategories } from "@/lib/db";
 import {
   approveStoreRequestAction,
   createStoreAction,
+  deleteStorePhotoAction,
   rejectStoreRequestAction,
   updateReportStatusAction,
   updateReviewVisibilityAction,
   updateStoreAction,
+  updateStorePhotoPrimaryAction,
   updateStorePublicationAction,
   uploadStorePhotoAction
 } from "./actions";
@@ -45,6 +48,8 @@ export default async function AdminPage({
       {params.status === "store_updated" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store updated.</p>}
       {params.status === "store_visibility_updated" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store visibility updated.</p>}
       {params.status === "store_photo_uploaded" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store photo uploaded.</p>}
+      {params.status === "store_photo_primary_updated" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Primary store photo updated.</p>}
+      {params.status === "store_photo_deleted" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store photo deleted.</p>}
       {params.status === "store_request_approved" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store request approved.</p>}
       {params.status === "store_request_rejected" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store request rejected.</p>}
       {params.status === "report_updated" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Report status updated.</p>}
@@ -344,7 +349,7 @@ export default async function AdminPage({
           <p className="mt-4 rounded-md bg-[#faf7f2] p-4 text-sm text-muted">No store requests yet.</p>
         )}
       </section>
-      <section className="mt-6 rounded-lg border border-line bg-white p-5">
+      <section id="store-photos" className="mt-6 rounded-lg border border-line bg-white p-5">
         <h2 className="font-bold text-ink">Store photos</h2>
         <p className="mt-1 text-sm text-muted">Upload operation-managed photos to Supabase Storage and attach them to a store.</p>
         <form action={uploadStorePhotoAction} className="mt-4 grid gap-4 lg:grid-cols-[1.2fr_1fr_1fr_auto]">
@@ -374,6 +379,46 @@ export default async function AdminPage({
             <button className="h-11 rounded-md bg-coral px-4 text-sm font-semibold text-white">Upload</button>
           </div>
         </form>
+        <div className="mt-6 space-y-4">
+          {stores.map((store) => (
+            <details key={store.id} className="rounded-md border border-line bg-[#faf7f2] p-4">
+              <summary className="cursor-pointer font-semibold text-ink">
+                {store.name} photos ({store.photos.length})
+              </summary>
+              {store.photos.length > 0 ? (
+                <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  {store.photos.map((photo) => (
+                    <div key={photo.id} className="rounded-md border border-line bg-white p-3">
+                      <div className="relative aspect-video overflow-hidden rounded-md bg-[#efe8df]">
+                        <Image src={photo.imageUrl} alt={photo.altText} fill sizes="(min-width: 1280px) 260px, (min-width: 768px) 45vw, 90vw" className="object-cover" />
+                      </div>
+                      <div className="mt-3 flex items-center justify-between gap-2">
+                        <span className={photo.isPrimary ? "rounded-full bg-[#eef7f4] px-3 py-1 text-xs font-semibold text-bay" : "rounded-full bg-[#fff5ea] px-3 py-1 text-xs font-semibold text-muted"}>
+                          {photo.isPrimary ? "Primary" : `Order ${photo.sortOrder}`}
+                        </span>
+                        <span className="truncate text-xs text-muted">{photo.altText}</span>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {!photo.isPrimary && (
+                          <form action={updateStorePhotoPrimaryAction}>
+                            <input type="hidden" name="photoId" value={photo.id} />
+                            <button className="h-9 rounded-md border border-line px-3 text-sm font-semibold">Make primary</button>
+                          </form>
+                        )}
+                        <form action={deleteStorePhotoAction}>
+                          <input type="hidden" name="photoId" value={photo.id} />
+                          <button className="h-9 rounded-md border border-line px-3 text-sm font-semibold text-coral">Delete</button>
+                        </form>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-4 rounded-md bg-white p-4 text-sm text-muted">No photos registered.</p>
+              )}
+            </details>
+          ))}
+        </div>
       </section>
       <section id="reports" className="mt-6 rounded-lg border border-line bg-white p-5">
         <h2 className="font-bold text-ink">Reports</h2>
@@ -493,6 +538,8 @@ function getAdminErrorMessage(error: string) {
     store_photo_too_large: "Store photos must be 5 MB or less.",
     store_not_found: "Store was not found.",
     store_photo_upload_failed: "Photo upload failed. Check the Supabase Storage bucket policy.",
+    store_photo_not_found: "Store photo was not found.",
+    store_photo_delete_failed: "Store photo deletion failed. Check the Supabase Storage bucket policy.",
     invalid_store_request_approval: "Slug, latitude, and longitude are required to approve a store request.",
     store_request_not_found: "Store request was not found or can no longer be changed.",
     store_request_slug_exists: "A store with this slug already exists.",

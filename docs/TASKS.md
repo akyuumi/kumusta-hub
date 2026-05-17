@@ -140,15 +140,15 @@ MVP は本番URLで動作しており、Supabase 本番DB、Googleログイン�
 
 #### 5. 店舗管理CRUD
 
-状態: Add/Edit Store、公開切替、写真追加は実装済み。写真管理と削除/archived設計は未実装。
+状態: Add/Edit Store、公開切替、写真追加、primary photo変更、写真削除は実装済み。削除/archived設計は未実装。
 
 実装タスク:
 
 - [x] 店舗編集画面または編集フォーム
 - [x] 店舗の公開/非公開切り替え
 - [x] 店舗基本情報の更新
-- [ ] primary photo の変更
-- [ ] 店舗写真の削除
+- [x] primary photo の変更
+- [x] 店舗写真の削除
 - [ ] 店舗削除または archived 状態の設計
 
 完了条件:

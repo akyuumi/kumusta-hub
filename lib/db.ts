@@ -116,6 +116,7 @@ function mapStore(store: StoreWithRelations, currentUserId?: string): Store {
     photos: store.photos.map((photo) => ({
       id: photo.id,
       imageUrl: photo.imageUrl,
+      storagePath: photo.storagePath ?? "",
       altText: photo.altText ?? store.name,
       sortOrder: photo.sortOrder,
       isPrimary: photo.isPrimary

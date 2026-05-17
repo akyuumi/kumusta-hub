@@ -74,6 +74,7 @@ export type Store = {
 export type StorePhoto = {
   id: string;
   imageUrl: string;
+  storagePath?: string;
   altText: string;
   sortOrder: number;
   isPrimary: boolean;
