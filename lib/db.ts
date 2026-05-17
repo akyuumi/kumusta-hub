@@ -11,7 +11,7 @@ import {
   stores as fallbackStores
 } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
-import type { AdminReport, Area, Brand, Category, Store, StoreSearchParams } from "@/lib/types";
+import type { AdminReport, AdminReview, Area, Brand, Category, Store, StoreSearchParams } from "@/lib/types";
 
 const storeInclude = {
   reviews: {
@@ -236,6 +236,8 @@ export async function getAdminReports(): Promise<AdminReport[]> {
           select: {
             id: true,
             body: true,
+            rating: true,
+            isHidden: true,
             store: {
               select: {
                 name: true,
@@ -256,9 +258,49 @@ export async function getAdminReports(): Promise<AdminReport[]> {
       createdAt: report.createdAt.toISOString().slice(0, 10),
       reviewId: report.review.id,
       reviewBody: report.review.body ?? "",
+      reviewRating: report.review.rating,
+      reviewIsHidden: report.review.isHidden,
       storeName: report.review.store.name,
       storeSlug: report.review.store.slug,
       reporterId: report.userId
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export async function getAdminReviews(): Promise<AdminReview[]> {
+  if (!canUseDatabase()) return [];
+
+  try {
+    const reviews = await prisma.review.findMany({
+      include: {
+        store: {
+          select: {
+            name: true,
+            slug: true
+          }
+        },
+        _count: {
+          select: {
+            reports: true
+          }
+        }
+      },
+      orderBy: [{ isHidden: "asc" }, { createdAt: "desc" }],
+      take: 100
+    });
+
+    return reviews.map((review) => ({
+      id: review.id,
+      rating: review.rating,
+      body: review.body ?? "",
+      isHidden: review.isHidden,
+      createdAt: review.createdAt.toISOString().slice(0, 10),
+      storeName: review.store.name,
+      storeSlug: review.store.slug,
+      userId: review.userId,
+      reportCount: review._count.reports
     }));
   } catch {
     return [];

@@ -91,7 +91,21 @@ export type AdminReport = {
   createdAt: string;
   reviewId: string;
   reviewBody: string;
+  reviewRating: number;
+  reviewIsHidden: boolean;
   storeName: string;
   storeSlug: string;
   reporterId: string;
+};
+
+export type AdminReview = {
+  id: string;
+  rating: number;
+  body: string;
+  isHidden: boolean;
+  createdAt: string;
+  storeName: string;
+  storeSlug: string;
+  userId: string;
+  reportCount: number;
 };

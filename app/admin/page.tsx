@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/auth";
-import { getAdminReports, getAdminStores, getAreas, getBrands, getCategories } from "@/lib/db";
-import { createStoreAction, updateReportStatusAction, uploadStorePhotoAction } from "./actions";
+import { getAdminReports, getAdminReviews, getAdminStores, getAreas, getBrands, getCategories } from "@/lib/db";
+import { createStoreAction, updateReportStatusAction, updateReviewVisibilityAction, uploadStorePhotoAction } from "./actions";
 
 export const metadata: Metadata = {
   title: "Admin"
@@ -16,7 +16,7 @@ export default async function AdminPage({
   }>;
 }) {
   await requireAdmin();
-  const [areas, brands, categories, stores, reports, params] = await Promise.all([getAreas(), getBrands(), getCategories(), getAdminStores(), getAdminReports(), searchParams]);
+  const [areas, brands, categories, stores, reports, reviews, params] = await Promise.all([getAreas(), getBrands(), getCategories(), getAdminStores(), getAdminReports(), getAdminReviews(), searchParams]);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
@@ -25,6 +25,7 @@ export default async function AdminPage({
       {params.status === "store_created" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store created.</p>}
       {params.status === "store_photo_uploaded" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store photo uploaded.</p>}
       {params.status === "report_updated" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Report status updated.</p>}
+      {params.status === "review_visibility_updated" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Review visibility updated.</p>}
       {params.error && <p className="mt-4 rounded-md bg-[#fff5ea] p-3 text-sm font-medium text-coral">{getAdminErrorMessage(params.error)}</p>}
       <div className="mt-6 grid gap-4 md:grid-cols-4">
         <Metric label="Stores" value={stores.length} />
@@ -182,6 +183,7 @@ export default async function AdminPage({
                 <tr>
                   <th className="p-3">Store</th>
                   <th className="p-3">Review</th>
+                  <th className="p-3">Review status</th>
                   <th className="p-3">Reason</th>
                   <th className="p-3">Reporter</th>
                   <th className="p-3">Status</th>
@@ -194,6 +196,9 @@ export default async function AdminPage({
                   <tr key={report.id} className="border-t border-line align-top">
                     <td className="p-3 font-medium">{report.storeName}</td>
                     <td className="max-w-xs p-3 text-muted">{report.reviewBody || "No body"}</td>
+                    <td className="p-3">
+                      <span className={report.reviewIsHidden ? "rounded-full bg-[#fff5ea] px-3 py-1 font-semibold text-coral" : "rounded-full bg-[#eef7f4] px-3 py-1 font-semibold text-bay"}>{report.reviewIsHidden ? "Hidden" : "Visible"}</span>
+                    </td>
                     <td className="p-3">{formatReportReason(report.reason)}</td>
                     <td className="p-3 font-mono text-xs text-muted">{report.reporterId.slice(0, 8)}</td>
                     <td className="p-3">
@@ -201,6 +206,7 @@ export default async function AdminPage({
                     </td>
                     <td className="p-3 text-muted">{report.createdAt}</td>
                     <td className="p-3">
+                      <div className="flex flex-wrap gap-2">
                       <form action={updateReportStatusAction} className="flex gap-2">
                         <input type="hidden" name="reportId" value={report.id} />
                         <select name="status" defaultValue={report.status} className="h-9 rounded-md border border-line bg-white px-2">
@@ -211,6 +217,13 @@ export default async function AdminPage({
                         </select>
                         <button className="h-9 rounded-md border border-line px-3 font-semibold">Update</button>
                       </form>
+                      <form action={updateReviewVisibilityAction}>
+                        <input type="hidden" name="reviewId" value={report.reviewId} />
+                        <input type="hidden" name="isHidden" value={report.reviewIsHidden ? "false" : "true"} />
+                        <input type="hidden" name="returnTo" value="reports" />
+                        <button className="h-9 rounded-md border border-line px-3 font-semibold">{report.reviewIsHidden ? "Restore" : "Hide"}</button>
+                      </form>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -219,6 +232,50 @@ export default async function AdminPage({
           </div>
         ) : (
           <p className="mt-4 rounded-md bg-[#faf7f2] p-4 text-sm text-muted">No reports yet.</p>
+        )}
+      </section>
+      <section id="reviews" className="mt-6 rounded-lg border border-line bg-white p-5">
+        <h2 className="font-bold text-ink">Reviews</h2>
+        {reviews.length > 0 ? (
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[900px] text-left text-sm">
+              <thead className="bg-[#faf7f2] text-muted">
+                <tr>
+                  <th className="p-3">Store</th>
+                  <th className="p-3">Rating</th>
+                  <th className="p-3">Review</th>
+                  <th className="p-3">Reports</th>
+                  <th className="p-3">Status</th>
+                  <th className="p-3">Created</th>
+                  <th className="p-3">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reviews.map((review) => (
+                  <tr key={review.id} className="border-t border-line align-top">
+                    <td className="p-3 font-medium">{review.storeName}</td>
+                    <td className="p-3">{review.rating}</td>
+                    <td className="max-w-sm p-3 text-muted">{review.body || "No body"}</td>
+                    <td className="p-3">{review.reportCount}</td>
+                    <td className="p-3">
+                      <span className={review.isHidden ? "rounded-full bg-[#fff5ea] px-3 py-1 font-semibold text-coral" : "rounded-full bg-[#eef7f4] px-3 py-1 font-semibold text-bay"}>{review.isHidden ? "Hidden" : "Visible"}</span>
+                    </td>
+                    <td className="p-3 text-muted">{review.createdAt}</td>
+                    <td className="p-3">
+                      <form action={updateReviewVisibilityAction}>
+                        <input type="hidden" name="reviewId" value={review.id} />
+                        <input type="hidden" name="isHidden" value={review.isHidden ? "false" : "true"} />
+                        <input type="hidden" name="returnTo" value="reviews" />
+                        <button className="h-9 rounded-md border border-line px-3 font-semibold">{review.isHidden ? "Restore" : "Hide"}</button>
+                      </form>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="mt-4 rounded-md bg-[#faf7f2] p-4 text-sm text-muted">No reviews yet.</p>
         )}
       </section>
     </main>
@@ -235,7 +292,8 @@ function getAdminErrorMessage(error: string) {
     store_photo_too_large: "Store photos must be 5 MB or less.",
     store_not_found: "Store was not found.",
     store_photo_upload_failed: "Photo upload failed. Check the Supabase Storage bucket policy.",
-    invalid_report_status: "Choose a valid report status."
+    invalid_report_status: "Choose a valid report status.",
+    review_not_found: "Review was not found."
   };
 
   return messages[error] ?? "Admin action failed.";

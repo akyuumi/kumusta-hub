@@ -192,6 +192,41 @@ export async function updateReportStatusAction(formData: FormData) {
   redirect("/admin?status=report_updated#reports");
 }
 
+export async function updateReviewVisibilityAction(formData: FormData) {
+  await requireAdmin();
+  const reviewId = String(formData.get("reviewId") ?? "");
+  const isHidden = formData.get("isHidden") === "true";
+  const returnTo = String(formData.get("returnTo") ?? "reviews");
+
+  if (!reviewId) {
+    redirect("/admin?error=review_not_found#reviews");
+  }
+
+  const review = await prisma.review.update({
+    where: {
+      id: reviewId
+    },
+    data: {
+      isHidden
+    },
+    select: {
+      storeId: true,
+      store: {
+        select: {
+          slug: true
+        }
+      }
+    }
+  });
+
+  await refreshStoreReviewStats(review.storeId);
+
+  revalidatePath("/admin");
+  revalidatePath("/search");
+  revalidatePath(`/stores/${review.store.slug}`);
+  redirect(`/admin?status=review_visibility_updated#${returnTo === "reports" ? "reports" : "reviews"}`);
+}
+
 async function uploadStorePhotoFile({ file, slug }: { file: File; slug: string }) {
   const supabase = await createClient();
   await supabase.storage.createBucket(STORE_PHOTOS_BUCKET, {
@@ -249,4 +284,29 @@ function slugify(value: string) {
 
 function isValidReportStatus(status: string) {
   return ["open", "in_review", "resolved", "rejected"].includes(status);
+}
+
+async function refreshStoreReviewStats(storeId: string) {
+  const aggregate = await prisma.review.aggregate({
+    where: {
+      storeId,
+      isHidden: false
+    },
+    _avg: {
+      rating: true
+    },
+    _count: {
+      _all: true
+    }
+  });
+
+  await prisma.store.update({
+    where: {
+      id: storeId
+    },
+    data: {
+      averageRating: aggregate._avg.rating ?? 0,
+      reviewCount: aggregate._count._all
+    }
+  });
 }
