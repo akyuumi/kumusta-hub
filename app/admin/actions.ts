@@ -170,6 +170,111 @@ export async function uploadStorePhotoAction(formData: FormData) {
   redirect("/admin?status=store_photo_uploaded");
 }
 
+export async function updateStoreAction(formData: FormData) {
+  await requireAdmin();
+  const storeId = String(formData.get("storeId") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  const slug = slugify(String(formData.get("slug") ?? name));
+  const description = emptyToNull(formData.get("description"));
+  const address = String(formData.get("address") ?? "").trim();
+  const lat = Number(formData.get("lat"));
+  const lng = Number(formData.get("lng"));
+  const categoryId = String(formData.get("categoryId") ?? "");
+  const areaId = String(formData.get("areaId") ?? "");
+  const brandId = emptyToNull(formData.get("brandId"));
+  const phone = emptyToNull(formData.get("phone"));
+  const websiteUrl = emptyToNull(formData.get("websiteUrl"));
+  const facebookUrl = emptyToNull(formData.get("facebookUrl"));
+  const openingHours = emptyToNull(formData.get("openingHours"));
+  const priceRange = emptyToNull(formData.get("priceRange"));
+  const featuredMenu = emptyToNull(formData.get("featuredMenu"));
+  const isPublished = formData.get("isPublished") === "on";
+  const tagalogSupport = formData.get("tagalogSupport") === "on";
+  const gcashSupport = formData.get("gcashSupport") === "on";
+  const filipinoProducts = formData.get("filipinoProducts") === "on";
+  const remittanceSupport = formData.get("remittanceSupport") === "on";
+
+  if (!storeId || !name || !slug || !address || !categoryId || !areaId || !Number.isFinite(lat) || !Number.isFinite(lng)) {
+    redirect("/admin?error=missing_store_fields#store-management");
+  }
+
+  const [store, category, area, brand, slugOwner] = await Promise.all([
+    prisma.store.findUnique({ where: { id: storeId }, select: { id: true, slug: true } }),
+    prisma.category.findUnique({ where: { id: categoryId }, select: { nameEn: true } }),
+    prisma.area.findUnique({ where: { id: areaId }, select: { nameEn: true } }),
+    brandId ? prisma.brand.findUnique({ where: { id: brandId }, select: { nameEn: true } }) : null,
+    prisma.store.findUnique({ where: { slug }, select: { id: true } })
+  ]);
+
+  if (!store) {
+    redirect("/admin?error=store_not_found#store-management");
+  }
+
+  if (!category || !area || (brandId && !brand)) {
+    redirect("/admin?error=invalid_store_taxonomy#store-management");
+  }
+
+  if (slugOwner && slugOwner.id !== store.id) {
+    redirect("/admin?error=store_slug_exists#store-management");
+  }
+
+  const searchText = [name, description, address, featuredMenu, brand?.nameEn, category.nameEn, area.nameEn].filter(Boolean).join(" ");
+
+  await prisma.store.update({
+    where: { id: store.id },
+    data: {
+      slug,
+      brandId,
+      categoryId,
+      areaId,
+      name,
+      description,
+      address,
+      lat,
+      lng,
+      phone,
+      websiteUrl,
+      facebookUrl,
+      openingHours: openingHours ?? undefined,
+      tagalogSupport,
+      gcashSupport,
+      filipinoProducts,
+      remittanceSupport,
+      priceRange,
+      featuredMenu,
+      isPublished,
+      searchText
+    }
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/search");
+  revalidatePath(`/stores/${store.slug}`);
+  revalidatePath(`/stores/${slug}`);
+  redirect("/admin?status=store_updated#store-management");
+}
+
+export async function updateStorePublicationAction(formData: FormData) {
+  await requireAdmin();
+  const storeId = String(formData.get("storeId") ?? "");
+  const isPublished = formData.get("isPublished") === "true";
+
+  if (!storeId) {
+    redirect("/admin?error=store_not_found#store-management");
+  }
+
+  const store = await prisma.store.update({
+    where: { id: storeId },
+    data: { isPublished },
+    select: { slug: true }
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/search");
+  revalidatePath(`/stores/${store.slug}`);
+  redirect("/admin?status=store_visibility_updated#store-management");
+}
+
 export async function approveStoreRequestAction(formData: FormData) {
   await requireAdmin();
   const requestId = String(formData.get("requestId") ?? "");

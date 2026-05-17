@@ -89,8 +89,11 @@ function mapStore(store: StoreWithRelations, currentUserId?: string): Store {
   return {
     id: store.id,
     slug: store.slug,
+    brandId: store.brandId ?? "",
     brandSlug: store.brand?.slug ?? "",
+    categoryId: store.categoryId,
     categorySlug: store.category.slug,
+    areaId: store.areaId,
     areaSlug: store.area.slug,
     name: store.name,
     description: store.description ?? "",

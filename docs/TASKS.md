@@ -26,7 +26,7 @@ MVP は本番URLで動作しており、Supabase 本番DB、Googleログイン�
 | 口コミ写真投稿 | 完了 | 最大3枚、Storage保存 |
 | お気に入り | 完了 | 保存/解除、`/mypage/favorites` DB化 |
 | 店舗写真管理 | 完了 | admin upload、primary photo |
-| 店舗追加 | 部分完了 | user申請、admin承認/却下、admin Add Store + primary photo は実装済み |
+| 店舗追加 | 部分完了 | user申請、admin承認/却下、admin Add/Edit Store + primary photo は実装済み |
 | 通報 | 部分完了 | user通報、重複防止、admin status変更を実装済み |
 | 口コミモデレーション | 部分完了 | admin一覧、非表示/再表示、評価再集計を実装済み |
 | 容量試算 | 完了 | `docs/CAPACITY.md` |
@@ -140,13 +140,13 @@ MVP は本番URLで動作しており、Supabase 本番DB、Googleログイン�
 
 #### 5. 店舗管理CRUD
 
-状態: Add Store と写真追加は実装済み。編集/公開切替/削除は未実装。
+状態: Add/Edit Store、公開切替、写真追加は実装済み。写真管理と削除/archived設計は未実装。
 
 実装タスク:
 
-- [ ] 店舗編集画面または編集フォーム
-- [ ] 店舗の公開/非公開切り替え
-- [ ] 店舗基本情報の更新
+- [x] 店舗編集画面または編集フォーム
+- [x] 店舗の公開/非公開切り替え
+- [x] 店舗基本情報の更新
 - [ ] primary photo の変更
 - [ ] 店舗写真の削除
 - [ ] 店舗削除または archived 状態の設計

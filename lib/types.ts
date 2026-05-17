@@ -42,8 +42,11 @@ export type ReviewPhoto = {
 export type Store = {
   id: string;
   slug: string;
+  brandId?: string;
   brandSlug: string;
+  categoryId?: string;
   categorySlug: string;
+  areaId?: string;
   areaSlug: string;
   name: string;
   description: string;

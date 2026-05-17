@@ -1,7 +1,17 @@
 import type { Metadata } from "next";
+import { Fragment } from "react";
 import { requireAdmin } from "@/lib/auth";
 import { getAdminReports, getAdminReviews, getAdminStoreRequests, getAdminStores, getAreas, getBrands, getCategories } from "@/lib/db";
-import { approveStoreRequestAction, createStoreAction, rejectStoreRequestAction, updateReportStatusAction, updateReviewVisibilityAction, uploadStorePhotoAction } from "./actions";
+import {
+  approveStoreRequestAction,
+  createStoreAction,
+  rejectStoreRequestAction,
+  updateReportStatusAction,
+  updateReviewVisibilityAction,
+  updateStoreAction,
+  updateStorePublicationAction,
+  uploadStorePhotoAction
+} from "./actions";
 
 export const metadata: Metadata = {
   title: "Admin"
@@ -32,6 +42,8 @@ export default async function AdminPage({
       <h1 className="text-3xl font-bold text-ink">Admin</h1>
       <p className="mt-2 text-muted">MVP control surface for store, taxonomy, review, report, and user moderation workflows.</p>
       {params.status === "store_created" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store created.</p>}
+      {params.status === "store_updated" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store updated.</p>}
+      {params.status === "store_visibility_updated" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store visibility updated.</p>}
       {params.status === "store_photo_uploaded" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store photo uploaded.</p>}
       {params.status === "store_request_approved" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store request approved.</p>}
       {params.status === "store_request_rejected" && <p className="mt-4 rounded-md bg-[#eef7f4] p-3 text-sm font-medium text-bay">Store request rejected.</p>}
@@ -124,9 +136,10 @@ export default async function AdminPage({
       <section id="store-management" className="mt-6 overflow-hidden rounded-lg border border-line bg-white">
         <div className="border-b border-line p-4">
           <h2 className="font-bold text-ink">Store management</h2>
+          <p className="mt-1 text-sm text-muted">Edit store basics and control public visibility without a code change.</p>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] text-left text-sm">
+          <table className="w-full min-w-[980px] text-left text-sm">
             <thead className="bg-[#faf7f2] text-muted">
               <tr>
                 <th className="p-3">Name</th>
@@ -139,16 +152,108 @@ export default async function AdminPage({
             </thead>
             <tbody>
               {stores.map((store) => (
-                <tr key={store.id} className="border-t border-line">
-                  <td className="p-3 font-medium">{store.name}</td>
-                  <td className="p-3">{store.areaSlug}</td>
-                  <td className="p-3">{store.categorySlug}</td>
-                  <td className="p-3">{store.averageRating}</td>
-                  <td className="p-3">{store.isPublished ? "Published" : "Hidden"}</td>
-                  <td className="p-3">
-                    <button className="rounded-md border border-line px-3 py-1.5 font-semibold">Edit</button>
-                  </td>
-                </tr>
+                <Fragment key={store.id}>
+                  <tr className="border-t border-line align-top">
+                    <td className="p-3">
+                      <p className="font-medium">{store.name}</p>
+                      <p className="mt-1 text-xs text-muted">{store.slug}</p>
+                    </td>
+                    <td className="p-3">{store.areaSlug}</td>
+                    <td className="p-3">{store.categorySlug}</td>
+                    <td className="p-3">
+                      {store.averageRating} ({store.reviewCount})
+                    </td>
+                    <td className="p-3">
+                      <span className={store.isPublished ? "rounded-full bg-[#eef7f4] px-3 py-1 font-semibold text-bay" : "rounded-full bg-[#fff5ea] px-3 py-1 font-semibold text-coral"}>
+                        {store.isPublished ? "Published" : "Hidden"}
+                      </span>
+                    </td>
+                    <td className="p-3">
+                      <div className="flex flex-wrap gap-2">
+                        <form action={updateStorePublicationAction}>
+                          <input type="hidden" name="storeId" value={store.id} />
+                          <input type="hidden" name="isPublished" value={store.isPublished ? "false" : "true"} />
+                          <button className="h-9 rounded-md border border-line px-3 font-semibold">{store.isPublished ? "Hide" : "Publish"}</button>
+                        </form>
+                        <span className="inline-flex h-9 items-center rounded-md border border-line px-3 font-semibold text-muted">Edit below</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr className="border-t border-line bg-[#faf7f2]/50">
+                    <td colSpan={6} className="p-4">
+                      <details>
+                        <summary className="mb-4 cursor-pointer font-semibold text-ink">Edit {store.name}</summary>
+                        <form action={updateStoreAction} className="grid gap-4">
+                          <input type="hidden" name="storeId" value={store.id} />
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <AdminInput label="Name" name="name" required defaultValue={store.name} />
+                            <AdminInput label="Slug" name="slug" required defaultValue={store.slug} />
+                          </div>
+                          <label className="space-y-1">
+                            <span className="text-sm font-semibold">Description</span>
+                            <textarea name="description" rows={3} defaultValue={store.description} className="w-full rounded-md border border-line bg-white px-3 py-2" />
+                          </label>
+                          <div className="grid gap-4 md:grid-cols-3">
+                            <label className="space-y-1">
+                              <span className="text-sm font-semibold">Category</span>
+                              <select name="categoryId" required defaultValue={store.categoryId} className="h-11 w-full rounded-md border border-line bg-white px-3">
+                                {categories.map((category) => (
+                                  <option key={category.id} value={category.id}>
+                                    {category.nameEn}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <label className="space-y-1">
+                              <span className="text-sm font-semibold">Area</span>
+                              <select name="areaId" required defaultValue={store.areaId} className="h-11 w-full rounded-md border border-line bg-white px-3">
+                                {areas.map((area) => (
+                                  <option key={area.id} value={area.id}>
+                                    {area.nameEn}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <label className="space-y-1">
+                              <span className="text-sm font-semibold">Brand</span>
+                              <select name="brandId" defaultValue={store.brandId} className="h-11 w-full rounded-md border border-line bg-white px-3">
+                                <option value="">Independent</option>
+                                {brands.map((brand) => (
+                                  <option key={brand.id} value={brand.id}>
+                                    {brand.nameEn}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                          </div>
+                          <AdminInput label="Address" name="address" required defaultValue={store.address} />
+                          <div className="grid gap-4 md:grid-cols-4">
+                            <AdminInput label="Latitude" name="lat" required type="number" step="any" defaultValue={String(store.lat)} />
+                            <AdminInput label="Longitude" name="lng" required type="number" step="any" defaultValue={String(store.lng)} />
+                            <AdminInput label="Phone" name="phone" defaultValue={store.phone} />
+                            <AdminInput label="Price range" name="priceRange" defaultValue={store.priceRange} />
+                          </div>
+                          <div className="grid gap-4 md:grid-cols-3">
+                            <AdminInput label="Website URL" name="websiteUrl" type="url" defaultValue={store.websiteUrl} />
+                            <AdminInput label="Facebook URL" name="facebookUrl" type="url" defaultValue={store.facebookUrl} />
+                            <AdminInput label="Opening hours" name="openingHours" defaultValue={store.openingHours} />
+                          </div>
+                          <AdminInput label="Featured menu / services" name="featuredMenu" defaultValue={store.featuredMenu.join(", ")} />
+                          <div className="flex flex-wrap items-center justify-between gap-4">
+                            <div className="flex flex-wrap gap-4 text-sm font-medium">
+                              <Checkbox name="isPublished" label="Published" defaultChecked={store.isPublished} />
+                              <Checkbox name="tagalogSupport" label="Tagalog" defaultChecked={store.tagalogSupport} />
+                              <Checkbox name="gcashSupport" label="GCash" defaultChecked={store.gcashSupport} />
+                              <Checkbox name="filipinoProducts" label="Filipino products" defaultChecked={store.filipinoProducts} />
+                              <Checkbox name="remittanceSupport" label="Remittance" defaultChecked={store.remittanceSupport} />
+                            </div>
+                            <button className="h-11 rounded-md bg-coral px-5 text-sm font-semibold text-white">Save Store</button>
+                          </div>
+                        </form>
+                      </details>
+                    </td>
+                  </tr>
+                </Fragment>
               ))}
             </tbody>
           </table>
@@ -462,10 +567,33 @@ function Field({
   );
 }
 
-function Checkbox({ name, label }: { name: string; label: string }) {
+function AdminInput({
+  label,
+  name,
+  required,
+  type = "text",
+  step,
+  defaultValue
+}: {
+  label: string;
+  name: string;
+  required?: boolean;
+  type?: string;
+  step?: string;
+  defaultValue?: string;
+}) {
+  return (
+    <label className="space-y-1">
+      <span className="text-sm font-semibold">{label}</span>
+      <input name={name} required={required} type={type} step={step} defaultValue={defaultValue} className="h-11 w-full rounded-md border border-line bg-white px-3" />
+    </label>
+  );
+}
+
+function Checkbox({ name, label, defaultChecked }: { name: string; label: string; defaultChecked?: boolean }) {
   return (
     <label className="flex h-11 items-center gap-2">
-      <input type="checkbox" name={name} />
+      <input type="checkbox" name={name} defaultChecked={defaultChecked} />
       {label}
     </label>
   );
