@@ -16,11 +16,9 @@ const categories = [
 ];
 
 const areas = [
-  { slug: "ikebukuro", prefectureSlug: "tokyo", nameJa: "池袋", nameEn: "Ikebukuro" },
-  { slug: "kawasaki", prefectureSlug: "kanagawa", nameJa: "川崎", nameEn: "Kawasaki" },
-  { slug: "shinjuku-okubo", prefectureSlug: "tokyo", nameJa: "新宿・大久保", nameEn: "Shinjuku / Okubo" },
-  { slug: "yokohama", prefectureSlug: "kanagawa", nameJa: "横浜", nameEn: "Yokohama" },
-  { slug: "osaka-namba", prefectureSlug: "osaka", nameJa: "大阪なんば", nameEn: "Osaka Namba" }
+  { slug: "tokyo", prefectureSlug: "tokyo", nameJa: "東京都", nameEn: "Tokyo" },
+  { slug: "kanagawa", prefectureSlug: "kanagawa", nameJa: "神奈川県", nameEn: "Kanagawa" },
+  { slug: "osaka", prefectureSlug: "osaka", nameJa: "大阪府", nameEn: "Osaka" }
 ];
 
 const brands = [
@@ -49,7 +47,7 @@ const stores = [
     slug: "bayanihan-kitchen-ikebukuro",
     brandSlug: "bayanihan-kitchen",
     categorySlug: "filipino-restaurant",
-    areaSlug: "ikebukuro",
+    areaSlug: "tokyo",
     name: "Bayanihan Kitchen Ikebukuro",
     description: "A casual spot near Ikebukuro with adobo, sisig, sinigang, and weekend boodle fight platters.",
     address: "Tokyo, Toshima City, Ikebukuro 2-12-8",
@@ -74,7 +72,7 @@ const stores = [
     slug: "sari-sari-mart-kawasaki",
     brandSlug: "sari-sari-mart",
     categorySlug: "filipino-grocery",
-    areaSlug: "kawasaki",
+    areaSlug: "kanagawa",
     name: "Sari-Sari Mart Kawasaki",
     description: "Filipino pantry staples, frozen seafood, sauces, snacks, and prepaid mobile cards.",
     address: "Kanagawa, Kawasaki City, Kawasaki-ku 7-3",
@@ -99,7 +97,7 @@ const stores = [
     slug: "padala-link-yokohama",
     brandSlug: "padala-link",
     categorySlug: "remittance-service",
-    areaSlug: "yokohama",
+    areaSlug: "kanagawa",
     name: "Padala Link Yokohama",
     description: "Remittance counter with parcel advice and English support for first-time users.",
     address: "Kanagawa, Yokohama City, Naka-ku 1-9-4",
@@ -124,7 +122,7 @@ const stores = [
     slug: "bayanihan-kitchen-namba",
     brandSlug: "bayanihan-kitchen",
     categorySlug: "filipino-restaurant",
-    areaSlug: "osaka-namba",
+    areaSlug: "osaka",
     name: "Bayanihan Kitchen Namba",
     description: "Late-night Filipino comfort food in Namba with karaoke-friendly group seating.",
     address: "Osaka, Chuo Ward, Namba 4-2-6",

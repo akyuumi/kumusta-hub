@@ -8,11 +8,9 @@ export const categories: Category[] = [
 ];
 
 export const areas: Area[] = [
-  { id: "area-ikebukuro", slug: "ikebukuro", prefecture: "Tokyo", nameJa: "池袋", nameEn: "Ikebukuro" },
-  { id: "area-kawasaki", slug: "kawasaki", prefecture: "Kanagawa", nameJa: "川崎", nameEn: "Kawasaki" },
-  { id: "area-okubo", slug: "shinjuku-okubo", prefecture: "Tokyo", nameJa: "新宿・大久保", nameEn: "Shinjuku / Okubo" },
-  { id: "area-yokohama", slug: "yokohama", prefecture: "Kanagawa", nameJa: "横浜", nameEn: "Yokohama" },
-  { id: "area-namba", slug: "osaka-namba", prefecture: "Osaka", nameJa: "大阪なんば", nameEn: "Osaka Namba" }
+  { id: "area-tokyo", slug: "tokyo", prefecture: "Tokyo", nameJa: "東京都", nameEn: "Tokyo" },
+  { id: "area-kanagawa", slug: "kanagawa", prefecture: "Kanagawa", nameJa: "神奈川県", nameEn: "Kanagawa" },
+  { id: "area-osaka", slug: "osaka", prefecture: "Osaka", nameJa: "大阪府", nameEn: "Osaka" }
 ];
 
 export const brands: Brand[] = [
@@ -45,7 +43,7 @@ export const stores: Store[] = [
     slug: "bayanihan-kitchen-ikebukuro",
     brandSlug: "bayanihan-kitchen",
     categorySlug: "filipino-restaurant",
-    areaSlug: "ikebukuro",
+    areaSlug: "tokyo",
     name: "Bayanihan Kitchen Ikebukuro",
     description: "A casual spot near Ikebukuro with adobo, sisig, sinigang, and weekend boodle fight platters.",
     address: "Tokyo, Toshima City, Ikebukuro 2-12-8",
@@ -102,7 +100,7 @@ export const stores: Store[] = [
     slug: "sari-sari-mart-kawasaki",
     brandSlug: "sari-sari-mart",
     categorySlug: "filipino-grocery",
-    areaSlug: "kawasaki",
+    areaSlug: "kanagawa",
     name: "Sari-Sari Mart Kawasaki",
     description: "Filipino pantry staples, frozen seafood, sauces, snacks, and prepaid mobile cards.",
     address: "Kanagawa, Kawasaki City, Kawasaki-ku 7-3",
@@ -149,7 +147,7 @@ export const stores: Store[] = [
     slug: "padala-link-yokohama",
     brandSlug: "padala-link",
     categorySlug: "remittance-service",
-    areaSlug: "yokohama",
+    areaSlug: "kanagawa",
     name: "Padala Link Yokohama",
     description: "Remittance counter with parcel advice and English support for first-time users.",
     address: "Kanagawa, Yokohama City, Naka-ku 1-9-4",
@@ -185,7 +183,7 @@ export const stores: Store[] = [
     slug: "bayanihan-kitchen-namba",
     brandSlug: "bayanihan-kitchen",
     categorySlug: "filipino-restaurant",
-    areaSlug: "osaka-namba",
+    areaSlug: "osaka",
     name: "Bayanihan Kitchen Namba",
     description: "Late-night Filipino comfort food in Namba with karaoke-friendly group seating.",
     address: "Osaka, Chuo Ward, Namba 4-2-6",

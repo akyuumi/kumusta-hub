@@ -78,11 +78,11 @@ export default async function AdminPage({
         <Metric label="Stores" value={stores.length} />
         <Metric label="Brands" value={brands.length} />
         <Metric label="Categories" value={categories.length} />
-        <Metric label="Areas" value={areas.length} />
+        <Metric label="Prefectures" value={areas.length} />
       </div>
       <section id="taxonomy" className="mt-6 rounded-lg border border-line bg-white p-5">
         <h2 className="font-bold text-ink">Taxonomy management</h2>
-        <p className="mt-1 text-sm text-muted">Manage brands, categories, and areas used by store registration and search filters.</p>
+        <p className="mt-1 text-sm text-muted">Manage brands, categories, and prefecture-level locations used by store registration and search filters.</p>
         <div className="mt-4 grid gap-5 xl:grid-cols-3">
           <div className="rounded-md border border-line bg-[#faf7f2] p-4">
             <h3 className="font-semibold text-ink">Brands</h3>
@@ -149,7 +149,7 @@ export default async function AdminPage({
             </div>
           </div>
           <div className="rounded-md border border-line bg-[#faf7f2] p-4">
-            <h3 className="font-semibold text-ink">Areas</h3>
+            <h3 className="font-semibold text-ink">Prefectures</h3>
             <form action={createAreaAction} className="mt-3 grid gap-3">
               <label className="space-y-1">
                 <span className="text-sm font-semibold">Prefecture</span>
@@ -164,7 +164,7 @@ export default async function AdminPage({
               <AdminInput label="Name JA" name="nameJa" required />
               <AdminInput label="Name EN" name="nameEn" required />
               <AdminInput label="Slug" name="slug" />
-              <button className="h-10 rounded-md bg-coral px-4 text-sm font-semibold text-white">Add Area</button>
+              <button className="h-10 rounded-md bg-coral px-4 text-sm font-semibold text-white">Add Prefecture Location</button>
             </form>
             <div className="mt-4 space-y-3">
               {areas.map((area) => (
@@ -202,8 +202,8 @@ export default async function AdminPage({
         <p className="mt-1 text-sm text-muted">Create a store and optionally register its primary photo in one step.</p>
         <form action={createStoreAction} className="mt-4 grid gap-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Name" name="name" required placeholder="Bayanihan Kitchen Shinjuku" />
-            <Field label="Slug" name="slug" placeholder="bayanihan-kitchen-shinjuku" />
+            <Field label="Name" name="name" required placeholder="Bayanihan Kitchen Tokyo" />
+            <Field label="Slug" name="slug" placeholder="bayanihan-kitchen-tokyo" />
           </div>
           <label className="space-y-1">
             <span className="text-sm font-semibold">Description</span>
@@ -221,7 +221,7 @@ export default async function AdminPage({
               </select>
             </label>
             <label className="space-y-1">
-              <span className="text-sm font-semibold">Area</span>
+              <span className="text-sm font-semibold">Prefecture</span>
               <select name="areaId" required className="h-11 w-full rounded-md border border-line bg-white px-3">
                 {areas.map((area) => (
                   <option key={area.id} value={area.id}>
@@ -284,7 +284,7 @@ export default async function AdminPage({
             <thead className="bg-[#faf7f2] text-muted">
               <tr>
                 <th className="p-3">Name</th>
-                <th className="p-3">Area</th>
+                <th className="p-3">Prefecture</th>
                 <th className="p-3">Category</th>
                 <th className="p-3">Rating</th>
                 <th className="p-3">Status</th>
@@ -362,7 +362,7 @@ export default async function AdminPage({
                               </select>
                             </label>
                             <label className="space-y-1">
-                              <span className="text-sm font-semibold">Area</span>
+                              <span className="text-sm font-semibold">Prefecture</span>
                               <select name="areaId" required defaultValue={store.areaId} className="h-11 w-full rounded-md border border-line bg-white px-3">
                                 {areas.map((area) => (
                                   <option key={area.id} value={area.id}>
@@ -735,8 +735,8 @@ export default async function AdminPage({
 
 function getAdminErrorMessage(error: string) {
   const messages: Record<string, string> = {
-    missing_store_fields: "Name, category, area, address, latitude, and longitude are required.",
-    invalid_store_taxonomy: "Choose a valid category, area, and brand.",
+    missing_store_fields: "Name, category, prefecture, address, latitude, and longitude are required.",
+    invalid_store_taxonomy: "Choose a valid category, prefecture, and brand.",
     store_slug_exists: "A store with this slug already exists.",
     missing_store_photo: "Choose a store and image file.",
     invalid_store_photo_type: "Upload a JPEG, PNG, or WebP image.",

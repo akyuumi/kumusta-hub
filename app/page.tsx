@@ -58,7 +58,7 @@ export default async function HomePage() {
         <div className="mb-6 flex items-end justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold text-ink">Featured stores</h2>
-            <p className="mt-2 text-muted">Initial focus areas with high Filipino community demand.</p>
+            <p className="mt-2 text-muted">Initial focus prefectures with high Filipino community demand.</p>
           </div>
           <Link href="/search" className="hidden items-center gap-2 font-semibold text-coral sm:flex">
             View all <ArrowRight size={18} />
@@ -73,7 +73,7 @@ export default async function HomePage() {
 
       <section className="border-y border-line bg-white">
         <div className="mx-auto grid max-w-7xl gap-5 px-4 py-10 sm:px-6 md:grid-cols-3">
-          <Value icon={MapPinned} title="Search by area" body="Ikebukuro, Kawasaki, Okubo, Yokohama, and Osaka Namba are seeded for MVP discovery." />
+          <Value icon={MapPinned} title="Search by prefecture" body="Tokyo, Kanagawa, and Osaka are seeded for MVP discovery." />
           <Value icon={MessageSquareText} title="Review-first" body="Store pages prioritize ratings, helpful reviews, and photos to build community trust." />
           <Value icon={ShieldCheck} title="Moderation-ready" body="Reports, admin status, and future RLS controls are reflected in the data model." />
         </div>

@@ -6,6 +6,7 @@
 
 ### Added
 
+- 店舗検索・登録で使うlocation粒度を市区町村/駅単位のエリアから都道府県単位へ変更。
 - canonical URL、OGP metadata、店舗詳細JSON-LDを追加。
 - sitemap / robots のbase URLを本番URL基準へ更新。
 - エリア、カテゴリ、ブランドページの説明文を改善。

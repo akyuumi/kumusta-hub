@@ -48,7 +48,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
         ) : (
           <div className="rounded-lg border border-line bg-white p-8 text-center">
             <p className="font-semibold text-ink">No stores match your filters.</p>
-            <p className="mt-2 text-sm text-muted">Try another area, category, or keyword.</p>
+            <p className="mt-2 text-sm text-muted">Try another prefecture, category, or keyword.</p>
           </div>
         )}
       </section>

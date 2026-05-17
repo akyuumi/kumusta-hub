@@ -6,7 +6,7 @@
 
 ## 現在地
 
-MVP は本番URLで動作しており、Supabase 本番DB、Googleログイン、口コミ投稿、口コミ写真、店舗写真、店舗追加申請、管理画面からの店舗追加、お気に入り保存まで実装済み。
+MVP は本番URLで動作しており、Supabase 本番DB、Googleログイン、口コミ投稿、口コミ写真、店舗写真、店舗追加申請、管理画面からの店舗追加、お気に入り保存、都道府県ベースの検索まで実装済み。
 
 現状は **「本番DB接続済みのβ版」から「正式リリース可能な運用版」へ上げる段階**。
 
@@ -21,12 +21,12 @@ MVP は本番URLで動作しており、Supabase 本番DB、Googleログイン�
 | Supabase RLS / Storage policy | 完了 | baseline policy 適用済み |
 | Google OAuth | 完了 | Supabase Auth 経由 |
 | admin allowlist | 完了 | `ADMIN_EMAILS` |
-| DBデータ取得 | 完了 | 検索、店舗詳細、カテゴリ、エリア、ブランド |
+| DBデータ取得 | 完了 | 検索、店舗詳細、カテゴリ、都道府県、ブランド |
 | 口コミ投稿 | 完了 | ログイン必須、評価、本文、集計更新 |
 | 口コミ写真投稿 | 完了 | 最大3枚、Storage保存 |
 | お気に入り | 完了 | 保存/解除、`/mypage/favorites` DB化 |
 | 店舗写真管理 | 完了 | admin upload、primary photo |
-| 店舗追加 | 完了 | user申請、admin承認/却下、admin Add/Edit/Archive Store + 写真管理は実装済み |
+| 店舗追加 | 完了 | user申請、admin承認/却下、admin Add/Edit/Archive Store + 写真管理、都道府県管理は実装済み |
 | 通報 | 部分完了 | user通報、重複防止、admin status変更を実装済み |
 | 口コミモデレーション | 部分完了 | admin一覧、非表示/再表示、評価再集計を実装済み |
 | 容量試算 | 完了 | `docs/CAPACITY.md` |
@@ -163,13 +163,13 @@ MVP は本番URLで動作しており、Supabase 本番DB、Googleログイン�
 
 - [x] ブランドCRUD
 - [x] カテゴリCRUD
-- [x] エリアCRUD
+- [x] 都道府県単位のlocation CRUD
 - [x] slug重複チェック
 - [x] 公開中店舗が紐づくtaxonomyの削除制御
 
 完了条件:
 
-- [x] 新しいエリア、カテゴリ、ブランドをコード変更なしで追加できる
+- [x] 新しい都道府県単位location、カテゴリ、ブランドをコード変更なしで追加できる
 
 ### Phase 3: リリース品質
 
@@ -222,13 +222,11 @@ MVP は本番URLで動作しており、Supabase 本番DB、Googleログイン�
 
 実装タスク:
 
-- [ ] 重点エリアごとの最低登録件数を決める
-  - Ikebukuro
-  - Kawasaki
-  - Shinjuku / Okubo
-  - Yokohama
-  - Osaka Namba
-- [ ] 各重点エリア5件以上、合計25件以上を登録
+- [ ] 重点都道府県ごとの最低登録件数を決める
+  - Tokyo
+  - Kanagawa
+  - Osaka
+- [ ] 各重点都道府県5件以上、合計15件以上を登録
 - [ ] 住所、座標、営業時間、電話、URLを確認
 - [ ] 店舗写真の利用権利を確認
 - [ ] 外部URL直書き画像をSupabase Storage管理へ移行

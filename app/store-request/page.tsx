@@ -39,7 +39,7 @@ export default async function StoreRequestPage({
             </select>
           </label>
           <label className="space-y-1">
-            <span className="text-sm font-semibold">Area</span>
+            <span className="text-sm font-semibold">Prefecture</span>
             <select name="areaId" required className="h-11 w-full rounded-md border border-line px-3">
               {areas.map((area) => (
                 <option key={area.id} value={area.id}>
@@ -73,8 +73,8 @@ function Field({ label, name, required, placeholder }: { label: string; name: st
 
 function getErrorMessage(error: string) {
   const messages: Record<string, string> = {
-    missing_fields: "Store name, address, category, and area are required.",
-    invalid_taxonomy: "Choose a valid category and area.",
+    missing_fields: "Store name, address, category, and prefecture are required.",
+    invalid_taxonomy: "Choose a valid category and prefecture.",
     store_request_rate_limited: "You have submitted several store requests recently. Please try again later."
   };
 

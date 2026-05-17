@@ -33,9 +33,9 @@ export function SearchForm({
         />
       </label>
       <label>
-        <span className="sr-only">Area</span>
+        <span className="sr-only">Prefecture</span>
         <select name="area" defaultValue={params?.area ?? ""} className="h-12 w-full rounded-md border border-line px-3 outline-none focus:border-bay">
-          <option value="">All areas</option>
+          <option value="">All prefectures</option>
           {areas.map((area) => (
             <option key={area.slug} value={area.slug}>
               {area.nameEn}

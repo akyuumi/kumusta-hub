@@ -80,7 +80,7 @@ export default async function StoreDetailPage({
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
             <InfoTile label="Category" value={category?.nameEn ?? "Store"} href={category ? `/categories/${category.slug}` : undefined} />
             <InfoTile label="Brand" value={brand?.nameEn ?? "Independent"} href={brand ? `/brands/${brand.slug}` : undefined} />
-            <InfoTile label="Area" value={area?.nameEn ?? "Japan"} href={area ? `/areas/${area.slug}` : undefined} />
+            <InfoTile label="Prefecture" value={area?.nameEn ?? "Japan"} href={area ? `/areas/${area.slug}` : undefined} />
             <InfoTile label="Hours" value={store.openingHours} />
           </div>
         </div>

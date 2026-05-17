@@ -104,7 +104,7 @@ Language TypeScript
 検索結果 /search
 店舗詳細 /stores/[slug]
 ブランド詳細 /brands/[slug]
-エリア詳細 /areas/[slug]
+都道府県詳細 /areas/[slug]
 カテゴリ詳細 /categories/[slug]
 ログイン /login
 マイページ /mypage
@@ -124,7 +124,7 @@ Language TypeScript
 検索条件
 
 - キーワード
-- エリア
+- 都道府県
 - カテゴリ
 - 星評価
 - タガログ語対応
@@ -242,7 +242,7 @@ Language TypeScript
 
 - CRUD
 
-エリア管理
+都道府県管理
 
 - CRUD
 
@@ -297,6 +297,8 @@ name_en text
 ⸻
 
 areas
+
+注記: 2026-05-18以降、公開仕様上の「エリア」は市区町村・駅単位ではなく都道府県単位とする。DB互換性のためテーブル名は `areas` のまま維持する。
 
 カラム 型
 id uuid
@@ -385,7 +387,7 @@ SEO対象ページ
 
 - 店舗ページ
 - ブランドページ
-- エリアページ
+- 都道府県ページ
 - カテゴリページ
 
 URL設計
@@ -445,13 +447,11 @@ Airbnb寄り。
 
 - 運営による手動登録
 
-初期重点エリア
+初期重点都道府県
 
-- Ikebukuro
-- Kawasaki
-- Shinjuku / Okubo
-- Yokohama
-- Osaka Namba
+- Tokyo
+- Kanagawa
+- Osaka
 
 戦略
 
