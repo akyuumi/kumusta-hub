@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { ExternalLink, Flag, Heart, MapPin, Phone, Star, ThumbsUp } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
-import { getArea, getBrand, getCategory, getStore, getStoreForUser, getStores, isFavoriteStore } from "@/lib/db";
+import { getLocation, getBrand, getCategory, getStore, getStoreForUser, getStores, isFavoriteStore } from "@/lib/db";
 import { absoluteUrl } from "@/lib/site";
 import type { Store } from "@/lib/types";
 import { formatRating } from "@/lib/utils";
@@ -58,9 +58,9 @@ export default async function StoreDetailPage({
   const store = await getStoreForUser(slug, user?.id);
   if (!store) notFound();
 
-  const [area, category, brand, query] = await Promise.all([getArea(store.areaSlug), getCategory(store.categorySlug), getBrand(store.brandSlug), searchParams]);
+  const [location, category, brand, query] = await Promise.all([getLocation(store.locationSlug), getCategory(store.categorySlug), getBrand(store.brandSlug), searchParams]);
   const isFavorite = user ? await isFavoriteStore(user.id, store.id) : false;
-  const jsonLd = buildStoreJsonLd({ store, areaName: area?.nameEn, categoryName: category?.nameEn });
+  const jsonLd = buildStoreJsonLd({ store, locationName: location?.nameEn, categoryName: category?.nameEn });
 
   return (
     <main>
@@ -69,7 +69,7 @@ export default async function StoreDetailPage({
         <div className="mb-5 flex flex-wrap items-center gap-2 text-sm text-muted">
           <Link href="/search">Search</Link>
           <span>/</span>
-          {area && <Link href={`/areas/${area.slug}`}>{area.nameEn}</Link>}
+          {location && <Link href={`/areas/${location.slug}`}>{location.nameEn}</Link>}
           <span>/</span>
           <span className="text-ink">{store.name}</span>
         </div>
@@ -80,7 +80,7 @@ export default async function StoreDetailPage({
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
             <InfoTile label="Category" value={category?.nameEn ?? "Store"} href={category ? `/categories/${category.slug}` : undefined} />
             <InfoTile label="Brand" value={brand?.nameEn ?? "Independent"} href={brand ? `/brands/${brand.slug}` : undefined} />
-            <InfoTile label="Prefecture" value={area?.nameEn ?? "Japan"} href={area ? `/areas/${area.slug}` : undefined} />
+            <InfoTile label="Prefecture" value={location?.nameEn ?? "Japan"} href={location ? `/areas/${location.slug}` : undefined} />
             <InfoTile label="Hours" value={store.openingHours} />
           </div>
         </div>
@@ -254,7 +254,7 @@ export default async function StoreDetailPage({
   );
 }
 
-function buildStoreJsonLd({ store, areaName, categoryName }: { store: Store; areaName?: string; categoryName?: string }) {
+function buildStoreJsonLd({ store, locationName, categoryName }: { store: Store; locationName?: string; categoryName?: string }) {
   const isRestaurant = store.categorySlug === "filipino-restaurant";
   const jsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
@@ -266,7 +266,7 @@ function buildStoreJsonLd({ store, areaName, categoryName }: { store: Store; are
     url: absoluteUrl(`/stores/${store.slug}`),
     telephone: store.phone || undefined,
     address: store.address,
-    areaServed: areaName,
+    areaServed: locationName,
     category: categoryName,
     geo: {
       "@type": "GeoCoordinates",

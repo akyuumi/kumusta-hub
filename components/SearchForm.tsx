@@ -1,16 +1,16 @@
 import { Search } from "lucide-react";
-import { areas as fallbackAreas, categories as fallbackCategories } from "@/lib/data";
-import type { Area, Category, StoreSearchParams } from "@/lib/types";
+import { categories as fallbackCategories, locations as fallbackLocations } from "@/lib/data";
+import type { Category, Location, StoreSearchParams } from "@/lib/types";
 
 export function SearchForm({
   params,
   compact = false,
-  areas = fallbackAreas,
+  locations = fallbackLocations,
   categories = fallbackCategories
 }: {
   params?: StoreSearchParams;
   compact?: boolean;
-  areas?: Area[];
+  locations?: Location[];
   categories?: Category[];
 }) {
   return (
@@ -34,11 +34,11 @@ export function SearchForm({
       </label>
       <label>
         <span className="sr-only">Prefecture</span>
-        <select name="area" defaultValue={params?.area ?? ""} className="h-12 w-full rounded-md border border-line px-3 outline-none focus:border-bay">
+        <select name="location" defaultValue={params?.location ?? params?.area ?? ""} className="h-12 w-full rounded-md border border-line px-3 outline-none focus:border-bay">
           <option value="">All prefectures</option>
-          {areas.map((area) => (
-            <option key={area.slug} value={area.slug}>
-              {area.nameEn}
+          {locations.map((location) => (
+            <option key={location.slug} value={location.slug}>
+              {location.nameEn}
             </option>
           ))}
         </select>

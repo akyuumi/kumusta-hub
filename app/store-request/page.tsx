@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
-import { getAreas, getCategories } from "@/lib/db";
+import { getCategories, getLocations } from "@/lib/db";
 import { createStoreRequestAction } from "./actions";
 
 export const metadata: Metadata = {
@@ -17,7 +17,7 @@ export default async function StoreRequestPage({
   }>;
 }) {
   await requireUser("/store-request");
-  const [areas, categories, params] = await Promise.all([getAreas(), getCategories(), searchParams]);
+  const [locations, categories, params] = await Promise.all([getLocations(), getCategories(), searchParams]);
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <h1 className="text-3xl font-bold text-ink">Store request</h1>
@@ -40,10 +40,10 @@ export default async function StoreRequestPage({
           </label>
           <label className="space-y-1">
             <span className="text-sm font-semibold">Prefecture</span>
-            <select name="areaId" required className="h-11 w-full rounded-md border border-line px-3">
-              {areas.map((area) => (
-                <option key={area.id} value={area.id}>
-                  {area.nameEn}
+            <select name="locationId" required className="h-11 w-full rounded-md border border-line px-3">
+              {locations.map((location) => (
+                <option key={location.id} value={location.id}>
+                  {location.nameEn}
                 </option>
               ))}
             </select>

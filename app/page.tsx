@@ -3,10 +3,10 @@ import type { ElementType } from "react";
 import { ArrowRight, MapPinned, MessageSquareText, ShieldCheck } from "lucide-react";
 import { SearchForm } from "@/components/SearchForm";
 import { StoreCard } from "@/components/StoreCard";
-import { getAreas, getCategories, getStores } from "@/lib/db";
+import { getLocations, getCategories, getStores } from "@/lib/db";
 
 export default async function HomePage() {
-  const [areas, categories, stores] = await Promise.all([getAreas(), getCategories(), getStores()]);
+  const [locations, categories, stores] = await Promise.all([getLocations(), getCategories(), getStores()]);
   const featuredStores = stores.slice(0, 3);
 
   return (
@@ -23,11 +23,11 @@ export default async function HomePage() {
                 Search trusted places for food, remittance, delivery, groceries, Tagalog support, and community essentials across Japan.
               </p>
             </div>
-            <SearchForm areas={areas} categories={categories} />
+            <SearchForm locations={locations} categories={categories} />
             <div className="flex flex-wrap gap-3">
-              {areas.map((area) => (
-                <Link key={area.slug} href={`/areas/${area.slug}`} className="rounded-full border border-line bg-white px-4 py-2 text-sm font-medium hover:border-bay">
-                  {area.nameEn}
+              {locations.map((location) => (
+                <Link key={location.slug} href={`/areas/${location.slug}`} className="rounded-full border border-line bg-white px-4 py-2 text-sm font-medium hover:border-bay">
+                  {location.nameEn}
                 </Link>
               ))}
             </div>

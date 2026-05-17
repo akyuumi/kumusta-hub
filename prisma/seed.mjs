@@ -15,7 +15,7 @@ const categories = [
   { slug: "international-delivery-service", nameJa: "国際配送", nameEn: "International Delivery Service" }
 ];
 
-const areas = [
+const locations = [
   { slug: "tokyo", prefectureSlug: "tokyo", nameJa: "東京都", nameEn: "Tokyo" },
   { slug: "kanagawa", prefectureSlug: "kanagawa", nameJa: "神奈川県", nameEn: "Kanagawa" },
   { slug: "osaka", prefectureSlug: "osaka", nameJa: "大阪府", nameEn: "Osaka" }
@@ -47,7 +47,7 @@ const stores = [
     slug: "bayanihan-kitchen-ikebukuro",
     brandSlug: "bayanihan-kitchen",
     categorySlug: "filipino-restaurant",
-    areaSlug: "tokyo",
+    locationSlug: "tokyo",
     name: "Bayanihan Kitchen Ikebukuro",
     description: "A casual spot near Ikebukuro with adobo, sisig, sinigang, and weekend boodle fight platters.",
     address: "Tokyo, Toshima City, Ikebukuro 2-12-8",
@@ -72,7 +72,7 @@ const stores = [
     slug: "sari-sari-mart-kawasaki",
     brandSlug: "sari-sari-mart",
     categorySlug: "filipino-grocery",
-    areaSlug: "kanagawa",
+    locationSlug: "kanagawa",
     name: "Sari-Sari Mart Kawasaki",
     description: "Filipino pantry staples, frozen seafood, sauces, snacks, and prepaid mobile cards.",
     address: "Kanagawa, Kawasaki City, Kawasaki-ku 7-3",
@@ -97,7 +97,7 @@ const stores = [
     slug: "padala-link-yokohama",
     brandSlug: "padala-link",
     categorySlug: "remittance-service",
-    areaSlug: "kanagawa",
+    locationSlug: "kanagawa",
     name: "Padala Link Yokohama",
     description: "Remittance counter with parcel advice and English support for first-time users.",
     address: "Kanagawa, Yokohama City, Naka-ku 1-9-4",
@@ -122,7 +122,7 @@ const stores = [
     slug: "bayanihan-kitchen-namba",
     brandSlug: "bayanihan-kitchen",
     categorySlug: "filipino-restaurant",
-    areaSlug: "osaka",
+    locationSlug: "osaka",
     name: "Bayanihan Kitchen Namba",
     description: "Late-night Filipino comfort food in Namba with karaoke-friendly group seating.",
     address: "Osaka, Chuo Ward, Namba 4-2-6",
@@ -170,32 +170,32 @@ async function main() {
     });
   }
 
-  for (const area of areas) {
+  for (const location of locations) {
     const prefecture = await prisma.prefecture.findUniqueOrThrow({
-      where: { slug: area.prefectureSlug }
+      where: { slug: location.prefectureSlug }
     });
 
     await prisma.area.upsert({
-      where: { slug: area.slug },
+      where: { slug: location.slug },
       update: {
         prefectureId: prefecture.id,
-        nameJa: area.nameJa,
-        nameEn: area.nameEn
+        nameJa: location.nameJa,
+        nameEn: location.nameEn
       },
       create: {
-        slug: area.slug,
+        slug: location.slug,
         prefectureId: prefecture.id,
-        nameJa: area.nameJa,
-        nameEn: area.nameEn
+        nameJa: location.nameJa,
+        nameEn: location.nameEn
       }
     });
   }
 
   for (const store of stores) {
-    const [brand, category, area] = await Promise.all([
+    const [brand, category, location] = await Promise.all([
       prisma.brand.findUniqueOrThrow({ where: { slug: store.brandSlug } }),
       prisma.category.findUniqueOrThrow({ where: { slug: store.categorySlug } }),
-      prisma.area.findUniqueOrThrow({ where: { slug: store.areaSlug } })
+      prisma.area.findUniqueOrThrow({ where: { slug: store.locationSlug } })
     ]);
 
     const searchText = [
@@ -205,7 +205,7 @@ async function main() {
       store.featuredMenu,
       brand.nameEn,
       category.nameEn,
-      area.nameEn
+      location.nameEn
     ].join(" ");
 
     const upsertedStore = await prisma.store.upsert({
@@ -213,7 +213,7 @@ async function main() {
       update: {
         brandId: brand.id,
         categoryId: category.id,
-        areaId: area.id,
+        areaId: location.id,
         name: store.name,
         description: store.description,
         address: store.address,
@@ -239,7 +239,7 @@ async function main() {
         slug: store.slug,
         brandId: brand.id,
         categoryId: category.id,
-        areaId: area.id,
+        areaId: location.id,
         name: store.name,
         description: store.description,
         address: store.address,

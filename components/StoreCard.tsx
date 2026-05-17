@@ -1,13 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { BadgeCheck, Heart, MapPin, Star } from "lucide-react";
-import { areas, categories, getArea, getCategory } from "@/lib/data";
+import { categories, getCategory, getLocation, locations } from "@/lib/data";
 import type { Store } from "@/lib/types";
 import { formatRating } from "@/lib/utils";
 
 export function StoreCard({ store }: { store: Store }) {
   const category = getCategory(store.categorySlug) ?? categories[0];
-  const area = getArea(store.areaSlug) ?? areas[0];
+  const location = getLocation(store.locationSlug) ?? locations[0];
 
   return (
     <article className="overflow-hidden rounded-lg border border-line bg-white shadow-sm">
@@ -31,7 +31,7 @@ export function StoreCard({ store }: { store: Store }) {
           </div>
           <div className="flex items-center gap-1 text-sm text-muted">
             <MapPin size={15} />
-            {area.nameEn}
+            {location.nameEn}
           </div>
           <div className="flex flex-wrap gap-2">
             {store.tagalogSupport && <Pill label="Tagalog" />}

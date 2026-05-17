@@ -11,11 +11,11 @@ export async function createStoreRequestAction(formData: FormData) {
   const storeName = String(formData.get("storeName") ?? "").trim();
   const address = String(formData.get("address") ?? "").trim();
   const categoryId = String(formData.get("categoryId") ?? "");
-  const areaId = String(formData.get("areaId") ?? "");
+  const locationId = String(formData.get("locationId") ?? formData.get("areaId") ?? "");
   const url = emptyToNull(formData.get("url"));
   const notes = emptyToNull(formData.get("notes"));
 
-  if (!storeName || !address || !categoryId || !areaId) {
+  if (!storeName || !address || !categoryId || !locationId) {
     redirect("/store-request?error=missing_fields");
   }
 
@@ -30,12 +30,12 @@ export async function createStoreRequestAction(formData: FormData) {
     redirect("/store-request?error=store_request_rate_limited");
   }
 
-  const [category, area] = await Promise.all([
+  const [category, location] = await Promise.all([
     prisma.category.findUnique({ where: { id: categoryId }, select: { id: true } }),
-    prisma.area.findUnique({ where: { id: areaId }, select: { id: true } })
+    prisma.area.findUnique({ where: { id: locationId }, select: { id: true } })
   ]);
 
-  if (!category || !area) {
+  if (!category || !location) {
     redirect("/store-request?error=invalid_taxonomy");
   }
 
@@ -45,7 +45,7 @@ export async function createStoreRequestAction(formData: FormData) {
       storeName,
       address,
       categoryId,
-      areaId,
+      areaId: locationId,
       url,
       notes
     }

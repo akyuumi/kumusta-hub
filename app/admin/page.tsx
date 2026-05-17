@@ -2,24 +2,24 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { Fragment } from "react";
 import { requireAdmin } from "@/lib/auth";
-import { getAdminContacts, getAdminReports, getAdminReviews, getAdminStoreRequests, getAdminStores, getAreas, getBrands, getCategories, getPrefectures } from "@/lib/db";
+import { getAdminContacts, getAdminReports, getAdminReviews, getAdminStoreRequests, getAdminStores, getBrands, getCategories, getLocations, getPrefectures } from "@/lib/db";
 import {
   approveStoreRequestAction,
-  createAreaAction,
   createBrandAction,
   createCategoryAction,
+  createLocationAction,
   createStoreAction,
-  deleteAreaAction,
   deleteBrandAction,
   deleteCategoryAction,
+  deleteLocationAction,
   deleteStorePhotoAction,
   rejectStoreRequestAction,
   updateReportStatusAction,
   updateReviewVisibilityAction,
-  updateAreaAction,
   updateBrandAction,
   updateCategoryAction,
   updateContactStatusAction,
+  updateLocationAction,
   updateStoreAction,
   updateStoreArchiveAction,
   updateStorePhotoPrimaryAction,
@@ -40,8 +40,8 @@ export default async function AdminPage({
   }>;
 }) {
   await requireAdmin();
-  const [areas, brands, categories, prefectures, stores, reports, reviews, storeRequests, contacts, params] = await Promise.all([
-    getAreas(),
+  const [locations, brands, categories, prefectures, stores, reports, reviews, storeRequests, contacts, params] = await Promise.all([
+    getLocations(),
     getBrands(),
     getCategories(),
     getPrefectures(),
@@ -78,7 +78,7 @@ export default async function AdminPage({
         <Metric label="Stores" value={stores.length} />
         <Metric label="Brands" value={brands.length} />
         <Metric label="Categories" value={categories.length} />
-        <Metric label="Prefectures" value={areas.length} />
+        <Metric label="Prefectures" value={locations.length} />
       </div>
       <section id="taxonomy" className="mt-6 rounded-lg border border-line bg-white p-5">
         <h2 className="font-bold text-ink">Taxonomy management</h2>
@@ -150,7 +150,7 @@ export default async function AdminPage({
           </div>
           <div className="rounded-md border border-line bg-[#faf7f2] p-4">
             <h3 className="font-semibold text-ink">Prefectures</h3>
-            <form action={createAreaAction} className="mt-3 grid gap-3">
+            <form action={createLocationAction} className="mt-3 grid gap-3">
               <label className="space-y-1">
                 <span className="text-sm font-semibold">Prefecture</span>
                 <select name="prefectureId" required className="h-11 w-full rounded-md border border-line bg-white px-3">
@@ -167,14 +167,14 @@ export default async function AdminPage({
               <button className="h-10 rounded-md bg-coral px-4 text-sm font-semibold text-white">Add Prefecture Location</button>
             </form>
             <div className="mt-4 space-y-3">
-              {areas.map((area) => (
-                <details key={area.id} className="rounded-md border border-line bg-white p-3">
-                  <summary className="cursor-pointer font-medium">{area.nameEn}</summary>
-                  <form action={updateAreaAction} className="mt-3 grid gap-3">
-                    <input type="hidden" name="areaId" value={area.id} />
+              {locations.map((location) => (
+                <details key={location.id} className="rounded-md border border-line bg-white p-3">
+                  <summary className="cursor-pointer font-medium">{location.nameEn}</summary>
+                  <form action={updateLocationAction} className="mt-3 grid gap-3">
+                    <input type="hidden" name="locationId" value={location.id} />
                     <label className="space-y-1">
                       <span className="text-sm font-semibold">Prefecture</span>
-                      <select name="prefectureId" required defaultValue={area.prefectureId} className="h-11 w-full rounded-md border border-line bg-white px-3">
+                      <select name="prefectureId" required defaultValue={location.prefectureId} className="h-11 w-full rounded-md border border-line bg-white px-3">
                         {prefectures.map((prefecture) => (
                           <option key={prefecture.id} value={prefecture.id}>
                             {prefecture.nameEn}
@@ -182,13 +182,13 @@ export default async function AdminPage({
                         ))}
                       </select>
                     </label>
-                    <AdminInput label="Name JA" name="nameJa" required defaultValue={area.nameJa} />
-                    <AdminInput label="Name EN" name="nameEn" required defaultValue={area.nameEn} />
-                    <AdminInput label="Slug" name="slug" required defaultValue={area.slug} />
+                    <AdminInput label="Name JA" name="nameJa" required defaultValue={location.nameJa} />
+                    <AdminInput label="Name EN" name="nameEn" required defaultValue={location.nameEn} />
+                    <AdminInput label="Slug" name="slug" required defaultValue={location.slug} />
                     <button className="h-9 rounded-md border border-line px-3 text-sm font-semibold">Save</button>
                   </form>
-                  <form action={deleteAreaAction} className="mt-2">
-                    <input type="hidden" name="areaId" value={area.id} />
+                  <form action={deleteLocationAction} className="mt-2">
+                    <input type="hidden" name="locationId" value={location.id} />
                     <button className="h-9 rounded-md border border-line px-3 text-sm font-semibold text-coral">Delete</button>
                   </form>
                 </details>
@@ -222,10 +222,10 @@ export default async function AdminPage({
             </label>
             <label className="space-y-1">
               <span className="text-sm font-semibold">Prefecture</span>
-              <select name="areaId" required className="h-11 w-full rounded-md border border-line bg-white px-3">
-                {areas.map((area) => (
-                  <option key={area.id} value={area.id}>
-                    {area.nameEn}
+              <select name="locationId" required className="h-11 w-full rounded-md border border-line bg-white px-3">
+                {locations.map((location) => (
+                  <option key={location.id} value={location.id}>
+                    {location.nameEn}
                   </option>
                 ))}
               </select>
@@ -299,7 +299,7 @@ export default async function AdminPage({
                       <p className="font-medium">{store.name}</p>
                       <p className="mt-1 text-xs text-muted">{store.slug}</p>
                     </td>
-                    <td className="p-3">{store.areaSlug}</td>
+                    <td className="p-3">{store.locationSlug}</td>
                     <td className="p-3">{store.categorySlug}</td>
                     <td className="p-3">
                       {store.averageRating} ({store.reviewCount})
@@ -363,10 +363,10 @@ export default async function AdminPage({
                             </label>
                             <label className="space-y-1">
                               <span className="text-sm font-semibold">Prefecture</span>
-                              <select name="areaId" required defaultValue={store.areaId} className="h-11 w-full rounded-md border border-line bg-white px-3">
-                                {areas.map((area) => (
-                                  <option key={area.id} value={area.id}>
-                                    {area.nameEn}
+                              <select name="locationId" required defaultValue={store.locationId} className="h-11 w-full rounded-md border border-line bg-white px-3">
+                                {locations.map((location) => (
+                                  <option key={location.id} value={location.id}>
+                                    {location.nameEn}
                                   </option>
                                 ))}
                               </select>
@@ -441,7 +441,7 @@ export default async function AdminPage({
                     </td>
                     <td className="p-3">
                       <p>{request.categoryName}</p>
-                      <p className="mt-1 text-muted">{request.areaName}</p>
+                      <p className="mt-1 text-muted">{request.locationName}</p>
                     </td>
                     <td className="max-w-xs p-3 text-muted">
                       {request.url ? (

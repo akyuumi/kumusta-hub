@@ -1,9 +1,9 @@
 import type { MetadataRoute } from "next";
-import { getAreas, getBrands, getCategories, getStores } from "@/lib/db";
+import { getLocations, getBrands, getCategories, getStores } from "@/lib/db";
 import { absoluteUrl } from "@/lib/site";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [areas, brands, categories, stores] = await Promise.all([getAreas(), getBrands(), getCategories(), getStores()]);
+  const [locations, brands, categories, stores] = await Promise.all([getLocations(), getBrands(), getCategories(), getStores()]);
   const staticRoutes = ["", "/search", "/store-request", "/terms", "/privacy", "/contact"].map((path) => ({
     url: absoluteUrl(path),
     lastModified: new Date()
@@ -16,7 +16,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const taxonomyRoutes = [
     ...brands.map((brand) => `/brands/${brand.slug}`),
-    ...areas.map((area) => `/areas/${area.slug}`),
+    ...locations.map((location) => `/areas/${location.slug}`),
     ...categories.map((category) => `/categories/${category.slug}`)
   ].map((path) => ({
     url: absoluteUrl(path),

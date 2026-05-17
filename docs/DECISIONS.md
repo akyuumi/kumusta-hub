@@ -255,7 +255,8 @@
 決定事項:
 
 - 公開検索、店舗追加申請、admin店舗管理で選ぶlocationは都道府県単位にする。
-- 既存DB互換性のため、テーブル名と内部型名は当面 `areas` / `Area` のまま維持する。
+- 既存DB互換性のため、DBテーブル名とPrisma modelは当面 `areas` / `Area` のまま維持する。
+- アプリ層の型、関数、変数名は `Location` / `getLocations` / `locationId` に寄せる。
 - 既存の細かいエリアレコードは都道府県レコードへ集約し、店舗と店舗追加申請の `area_id` を付け替える。
 - URLは互換性を優先し、当面 `/areas/{slug}` を維持する。
 
@@ -273,5 +274,30 @@
 
 制約:
 
-- 内部名に `area` が残るため、コード上の命名と画面仕様に一部差分がある。
+- DB層には `area` が残るため、Prisma query と SQL では `area_id` / `areas` を扱う。
 - `/prefectures/{slug}` へのURL変更は未実施。
+
+## 2026-05-18: アプリ層のlocation命名をAreaからLocationへ寄せる
+
+決定事項:
+
+- public UI は引き続き `Prefecture` と表示する。
+- アプリ層の型、fallback data、DB取得関数、ページ変数、admin action名は `Location` に寄せる。
+- DB schema、Prisma model、migration、既存URL `/areas/{slug}` は変更しない。
+- 検索queryは新規フォームでは `location` を使い、旧 `area` queryも読み取れるようにする。
+
+理由:
+
+- `Area` は市区町村/駅単位に見えるため、都道府県仕様と認知がずれる。
+- `Prefecture` に固定すると将来の市区町村・駅・地域タグ再拡張時に狭すぎる。
+- DB/URL変更を避けることで、本番データとSEO導線への影響を抑えられる。
+
+影響:
+
+- 開発時は画面仕様に近い `Location` 名で読める。
+- DB操作では `prisma.area` と `areaId` への変換が残る。
+
+制約:
+
+- `/areas/{slug}` は互換性優先で継続する。
+- DB物理名の `areas` から `locations` への変更は正式リリース前の別判断とする。

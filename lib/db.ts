@@ -1,17 +1,17 @@
 import type { Prisma } from "@prisma/client";
 import {
-  areas as fallbackAreas,
   brands as fallbackBrands,
   categories as fallbackCategories,
-  getArea as getFallbackArea,
   getBrand as getFallbackBrand,
   getCategory as getFallbackCategory,
+  getLocation as getFallbackLocation,
   getStore as getFallbackStore,
+  locations as fallbackLocations,
   searchStores as searchFallbackStores,
   stores as fallbackStores
 } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
-import type { AdminContact, AdminReport, AdminReview, AdminStoreRequest, Area, Brand, Category, Prefecture, Store, StoreSearchParams } from "@/lib/types";
+import type { AdminContact, AdminReport, AdminReview, AdminStoreRequest, Brand, Category, Location, Prefecture, Store, StoreSearchParams } from "@/lib/types";
 
 const storeInclude = {
   reviews: {
@@ -51,14 +51,14 @@ function mapCategory(category: { id: string; slug: string; nameJa: string; nameE
   };
 }
 
-function mapArea(area: { id: string; prefectureId?: string; slug: string; nameJa: string; nameEn: string; prefecture?: { nameEn: string } | null }): Area {
+function mapLocation(location: { id: string; prefectureId?: string; slug: string; nameJa: string; nameEn: string; prefecture?: { nameEn: string } | null }): Location {
   return {
-    id: area.id,
-    prefectureId: area.prefectureId,
-    slug: area.slug,
-    prefecture: area.prefecture?.nameEn ?? "Japan",
-    nameJa: area.nameJa,
-    nameEn: area.nameEn
+    id: location.id,
+    prefectureId: location.prefectureId,
+    slug: location.slug,
+    prefecture: location.prefecture?.nameEn ?? "Japan",
+    nameJa: location.nameJa,
+    nameEn: location.nameEn
   };
 }
 
@@ -103,8 +103,8 @@ function mapStore(store: StoreWithRelations, currentUserId?: string): Store {
     brandSlug: store.brand?.slug ?? "",
     categoryId: store.categoryId,
     categorySlug: store.category.slug,
-    areaId: store.areaId,
-    areaSlug: store.area.slug,
+    locationId: store.areaId,
+    locationSlug: store.area.slug,
     name: store.name,
     description: store.description ?? "",
     address: store.address,
@@ -160,17 +160,17 @@ export async function getCategories(): Promise<Category[]> {
   }
 }
 
-export async function getAreas(): Promise<Area[]> {
-  if (!canUseDatabase()) return fallbackAreas;
+export async function getLocations(): Promise<Location[]> {
+  if (!canUseDatabase()) return fallbackLocations;
 
   try {
-    const areas = await prisma.area.findMany({
+    const locations = await prisma.area.findMany({
       include: { prefecture: true },
       orderBy: { nameEn: "asc" }
     });
-    return areas.map(mapArea);
+    return locations.map(mapLocation);
   } catch {
-    return fallbackAreas;
+    return fallbackLocations;
   }
 }
 
@@ -361,8 +361,8 @@ export async function getAdminStoreRequests(): Promise<AdminStoreRequest[]> {
       address: request.address,
       categoryId: request.categoryId,
       categoryName: request.category.nameEn,
-      areaId: request.areaId,
-      areaName: request.area.nameEn,
+      locationId: request.areaId,
+      locationName: request.area.nameEn,
       url: request.url ?? "",
       notes: request.notes ?? "",
       status: request.status,
@@ -433,7 +433,7 @@ export async function searchStores(params: StoreSearchParams): Promise<Store[]> 
       where: {
         isPublished: true,
         archivedAt: null,
-        ...(params.area ? { area: { slug: params.area } } : {}),
+        ...((params.location ?? params.area) ? { area: { slug: params.location ?? params.area } } : {}),
         ...(params.category ? { category: { slug: params.category } } : {}),
         ...(params.tagalog === "true" ? { tagalogSupport: true } : {}),
         ...(minRating ? { averageRating: { gte: minRating } } : {}),
@@ -524,17 +524,17 @@ export async function getCategory(slug: string): Promise<Category | undefined> {
   }
 }
 
-export async function getArea(slug: string): Promise<Area | undefined> {
-  if (!canUseDatabase()) return getFallbackArea(slug);
+export async function getLocation(slug: string): Promise<Location | undefined> {
+  if (!canUseDatabase()) return getFallbackLocation(slug);
 
   try {
-    const area = await prisma.area.findUnique({
+    const location = await prisma.area.findUnique({
       where: { slug },
       include: { prefecture: true }
     });
-    return area ? mapArea(area) : undefined;
+    return location ? mapLocation(location) : undefined;
   } catch {
-    return getFallbackArea(slug);
+    return getFallbackLocation(slug);
   }
 }
 

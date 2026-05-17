@@ -1,4 +1,4 @@
-import type { Area, Brand, Category, Store, StoreSearchParams } from "@/lib/types";
+import type { Brand, Category, Location, Store, StoreSearchParams } from "@/lib/types";
 
 export const categories: Category[] = [
   { id: "cat-restaurant", slug: "filipino-restaurant", nameJa: "フィリピン料理", nameEn: "Filipino Restaurant" },
@@ -7,7 +7,7 @@ export const categories: Category[] = [
   { id: "cat-delivery", slug: "international-delivery-service", nameJa: "国際配送", nameEn: "International Delivery Service" }
 ];
 
-export const areas: Area[] = [
+export const locations: Location[] = [
   { id: "area-tokyo", slug: "tokyo", prefecture: "Tokyo", nameJa: "東京都", nameEn: "Tokyo" },
   { id: "area-kanagawa", slug: "kanagawa", prefecture: "Kanagawa", nameJa: "神奈川県", nameEn: "Kanagawa" },
   { id: "area-osaka", slug: "osaka", prefecture: "Osaka", nameJa: "大阪府", nameEn: "Osaka" }
@@ -43,7 +43,7 @@ export const stores: Store[] = [
     slug: "bayanihan-kitchen-ikebukuro",
     brandSlug: "bayanihan-kitchen",
     categorySlug: "filipino-restaurant",
-    areaSlug: "tokyo",
+    locationSlug: "tokyo",
     name: "Bayanihan Kitchen Ikebukuro",
     description: "A casual spot near Ikebukuro with adobo, sisig, sinigang, and weekend boodle fight platters.",
     address: "Tokyo, Toshima City, Ikebukuro 2-12-8",
@@ -100,7 +100,7 @@ export const stores: Store[] = [
     slug: "sari-sari-mart-kawasaki",
     brandSlug: "sari-sari-mart",
     categorySlug: "filipino-grocery",
-    areaSlug: "kanagawa",
+    locationSlug: "kanagawa",
     name: "Sari-Sari Mart Kawasaki",
     description: "Filipino pantry staples, frozen seafood, sauces, snacks, and prepaid mobile cards.",
     address: "Kanagawa, Kawasaki City, Kawasaki-ku 7-3",
@@ -147,7 +147,7 @@ export const stores: Store[] = [
     slug: "padala-link-yokohama",
     brandSlug: "padala-link",
     categorySlug: "remittance-service",
-    areaSlug: "kanagawa",
+    locationSlug: "kanagawa",
     name: "Padala Link Yokohama",
     description: "Remittance counter with parcel advice and English support for first-time users.",
     address: "Kanagawa, Yokohama City, Naka-ku 1-9-4",
@@ -183,7 +183,7 @@ export const stores: Store[] = [
     slug: "bayanihan-kitchen-namba",
     brandSlug: "bayanihan-kitchen",
     categorySlug: "filipino-restaurant",
-    areaSlug: "osaka",
+    locationSlug: "osaka",
     name: "Bayanihan Kitchen Namba",
     description: "Late-night Filipino comfort food in Namba with karaoke-friendly group seating.",
     address: "Osaka, Chuo Ward, Namba 4-2-6",
@@ -220,8 +220,8 @@ export function getCategory(slug: string) {
   return categories.find((category) => category.slug === slug);
 }
 
-export function getArea(slug: string) {
-  return areas.find((area) => area.slug === slug);
+export function getLocation(slug: string) {
+  return locations.find((location) => location.slug === slug);
 }
 
 export function getBrand(slug: string) {
@@ -238,7 +238,8 @@ export function searchStores(params: StoreSearchParams) {
 
   return stores.filter((store) => {
     if (!store.isPublished) return false;
-    if (params.area && store.areaSlug !== params.area) return false;
+    const locationSlug = params.location ?? params.area;
+    if (locationSlug && store.locationSlug !== locationSlug) return false;
     if (params.category && store.categorySlug !== params.category) return false;
     if (minRating && store.averageRating < minRating) return false;
     if (params.tagalog === "true" && !store.tagalogSupport) return false;
@@ -248,8 +249,8 @@ export function searchStores(params: StoreSearchParams) {
       store.name,
       store.description,
       store.address,
-      getArea(store.areaSlug)?.nameEn,
-      getArea(store.areaSlug)?.nameJa,
+      getLocation(store.locationSlug)?.nameEn,
+      getLocation(store.locationSlug)?.nameJa,
       getCategory(store.categorySlug)?.nameEn,
       getCategory(store.categorySlug)?.nameJa,
       ...store.featuredMenu

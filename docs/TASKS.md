@@ -27,6 +27,7 @@ MVP は本番URLで動作しており、Supabase 本番DB、Googleログイン�
 | お気に入り | 完了 | 保存/解除、`/mypage/favorites` DB化 |
 | 店舗写真管理 | 完了 | admin upload、primary photo |
 | 店舗追加 | 完了 | user申請、admin承認/却下、admin Add/Edit/Archive Store + 写真管理、都道府県管理は実装済み |
+| Location命名整理 | 完了 | アプリ層はLocation、DB/URLは互換性維持 |
 | 通報 | 部分完了 | user通報、重複防止、admin status変更を実装済み |
 | 口コミモデレーション | 部分完了 | admin一覧、非表示/再表示、評価再集計を実装済み |
 | 容量試算 | 完了 | `docs/CAPACITY.md` |

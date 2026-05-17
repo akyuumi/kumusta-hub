@@ -7,7 +7,7 @@ export type Category = {
   nameEn: string;
 };
 
-export type Area = {
+export type Location = {
   id: string;
   prefectureId?: string;
   slug: string;
@@ -54,8 +54,8 @@ export type Store = {
   brandSlug: string;
   categoryId?: string;
   categorySlug: string;
-  areaId?: string;
-  areaSlug: string;
+  locationId?: string;
+  locationSlug: string;
   name: string;
   description: string;
   address: string;
@@ -91,6 +91,7 @@ export type StorePhoto = {
 
 export type StoreSearchParams = {
   q?: string;
+  location?: string;
   area?: string;
   category?: string;
   rating?: string;
@@ -129,8 +130,8 @@ export type AdminStoreRequest = {
   address: string;
   categoryId: string;
   categoryName: string;
-  areaId: string;
-  areaName: string;
+  locationId: string;
+  locationName: string;
   url: string;
   notes: string;
   status: string;

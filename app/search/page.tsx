@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { MapPanel } from "@/components/MapPanel";
 import { SearchForm } from "@/components/SearchForm";
 import { StoreCard } from "@/components/StoreCard";
-import { getAreas, getCategories, searchStores } from "@/lib/db";
+import { getLocations, getCategories, searchStores } from "@/lib/db";
 import type { StoreSearchParams } from "@/lib/types";
 
 export const metadata: Metadata = {
@@ -12,12 +12,12 @@ export const metadata: Metadata = {
 
 export default async function SearchPage({ searchParams }: { searchParams: Promise<StoreSearchParams> }) {
   const params = await searchParams;
-  const [areas, categories, results] = await Promise.all([getAreas(), getCategories(), searchStores(params)]);
+  const [locations, categories, results] = await Promise.all([getLocations(), getCategories(), searchStores(params)]);
 
   return (
     <main className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[1fr_420px]">
       <section className="space-y-5">
-        <SearchForm params={params} compact areas={areas} categories={categories} />
+        <SearchForm params={params} compact locations={locations} categories={categories} />
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-ink">Search results</h1>
@@ -25,7 +25,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
           </div>
           <form action="/search" className="hidden items-center gap-2 sm:flex">
             <input type="hidden" name="q" value={params.q ?? ""} />
-            <input type="hidden" name="area" value={params.area ?? ""} />
+            <input type="hidden" name="location" value={params.location ?? params.area ?? ""} />
             <input type="hidden" name="category" value={params.category ?? ""} />
             <label className="flex items-center gap-2 rounded-md border border-line bg-white px-3 py-2 text-sm">
               <input type="checkbox" name="tagalog" value="true" defaultChecked={params.tagalog === "true"} />

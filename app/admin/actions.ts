@@ -19,7 +19,7 @@ export async function createStoreAction(formData: FormData) {
   const lat = Number(formData.get("lat"));
   const lng = Number(formData.get("lng"));
   const categoryId = String(formData.get("categoryId") ?? "");
-  const areaId = String(formData.get("areaId") ?? "");
+  const locationId = String(formData.get("locationId") ?? formData.get("areaId") ?? "");
   const brandId = emptyToNull(formData.get("brandId"));
   const phone = emptyToNull(formData.get("phone"));
   const websiteUrl = emptyToNull(formData.get("websiteUrl"));
@@ -35,7 +35,7 @@ export async function createStoreAction(formData: FormData) {
   const photo = formData.get("photo");
   const altText = String(formData.get("altText") ?? "").trim();
 
-  if (!name || !slug || !address || !categoryId || !areaId || !Number.isFinite(lat) || !Number.isFinite(lng)) {
+  if (!name || !slug || !address || !categoryId || !locationId || !Number.isFinite(lat) || !Number.isFinite(lng)) {
     redirect("/admin?error=missing_store_fields#add-store");
   }
 
@@ -43,14 +43,14 @@ export async function createStoreAction(formData: FormData) {
     validateStorePhoto(photo);
   }
 
-  const [category, area, brand, existingStore] = await Promise.all([
+  const [category, location, brand, existingStore] = await Promise.all([
     prisma.category.findUnique({ where: { id: categoryId }, select: { nameEn: true } }),
-    prisma.area.findUnique({ where: { id: areaId }, select: { nameEn: true } }),
+    prisma.area.findUnique({ where: { id: locationId }, select: { nameEn: true } }),
     brandId ? prisma.brand.findUnique({ where: { id: brandId }, select: { nameEn: true } }) : null,
     prisma.store.findUnique({ where: { slug }, select: { id: true } })
   ]);
 
-  if (!category || !area || (brandId && !brand)) {
+  if (!category || !location || (brandId && !brand)) {
     redirect("/admin?error=invalid_store_taxonomy#add-store");
   }
 
@@ -59,14 +59,14 @@ export async function createStoreAction(formData: FormData) {
   }
 
   const photoUpload = photo instanceof File && photo.size > 0 ? await uploadStorePhotoFile({ file: photo, slug }) : null;
-  const searchText = [name, description, address, featuredMenu, brand?.nameEn, category.nameEn, area.nameEn].filter(Boolean).join(" ");
+  const searchText = [name, description, address, featuredMenu, brand?.nameEn, category.nameEn, location.nameEn].filter(Boolean).join(" ");
 
   const store = await prisma.store.create({
     data: {
       slug,
       brandId,
       categoryId,
-      areaId,
+      areaId: locationId,
       name,
       description,
       address,
@@ -307,7 +307,7 @@ export async function updateStoreAction(formData: FormData) {
   const lat = Number(formData.get("lat"));
   const lng = Number(formData.get("lng"));
   const categoryId = String(formData.get("categoryId") ?? "");
-  const areaId = String(formData.get("areaId") ?? "");
+  const locationId = String(formData.get("locationId") ?? formData.get("areaId") ?? "");
   const brandId = emptyToNull(formData.get("brandId"));
   const phone = emptyToNull(formData.get("phone"));
   const websiteUrl = emptyToNull(formData.get("websiteUrl"));
@@ -321,14 +321,14 @@ export async function updateStoreAction(formData: FormData) {
   const filipinoProducts = formData.get("filipinoProducts") === "on";
   const remittanceSupport = formData.get("remittanceSupport") === "on";
 
-  if (!storeId || !name || !slug || !address || !categoryId || !areaId || !Number.isFinite(lat) || !Number.isFinite(lng)) {
+  if (!storeId || !name || !slug || !address || !categoryId || !locationId || !Number.isFinite(lat) || !Number.isFinite(lng)) {
     redirect("/admin?error=missing_store_fields#store-management");
   }
 
-  const [store, category, area, brand, slugOwner] = await Promise.all([
+  const [store, category, location, brand, slugOwner] = await Promise.all([
     prisma.store.findUnique({ where: { id: storeId }, select: { id: true, slug: true, archivedAt: true } }),
     prisma.category.findUnique({ where: { id: categoryId }, select: { nameEn: true } }),
-    prisma.area.findUnique({ where: { id: areaId }, select: { nameEn: true } }),
+    prisma.area.findUnique({ where: { id: locationId }, select: { nameEn: true } }),
     brandId ? prisma.brand.findUnique({ where: { id: brandId }, select: { nameEn: true } }) : null,
     prisma.store.findUnique({ where: { slug }, select: { id: true } })
   ]);
@@ -337,7 +337,7 @@ export async function updateStoreAction(formData: FormData) {
     redirect("/admin?error=store_not_found#store-management");
   }
 
-  if (!category || !area || (brandId && !brand)) {
+  if (!category || !location || (brandId && !brand)) {
     redirect("/admin?error=invalid_store_taxonomy#store-management");
   }
 
@@ -349,7 +349,7 @@ export async function updateStoreAction(formData: FormData) {
     redirect("/admin?error=store_archived_cannot_publish#store-management");
   }
 
-  const searchText = [name, description, address, featuredMenu, brand?.nameEn, category.nameEn, area.nameEn].filter(Boolean).join(" ");
+  const searchText = [name, description, address, featuredMenu, brand?.nameEn, category.nameEn, location.nameEn].filter(Boolean).join(" ");
 
   await prisma.store.update({
     where: { id: store.id },
@@ -357,7 +357,7 @@ export async function updateStoreAction(formData: FormData) {
       slug,
       brandId,
       categoryId,
-      areaId,
+      areaId: locationId,
       name,
       description,
       address,
@@ -658,7 +658,7 @@ export async function deleteCategoryAction(formData: FormData) {
   redirect("/admin?status=taxonomy_deleted#taxonomy");
 }
 
-export async function createAreaAction(formData: FormData) {
+export async function createLocationAction(formData: FormData) {
   await requireAdmin();
   const prefectureId = String(formData.get("prefectureId") ?? "");
   const nameJa = String(formData.get("nameJa") ?? "").trim();
@@ -669,7 +669,7 @@ export async function createAreaAction(formData: FormData) {
     redirect("/admin?error=missing_taxonomy_fields#taxonomy");
   }
 
-  const [prefecture, existingArea] = await Promise.all([
+  const [prefecture, existingLocation] = await Promise.all([
     prisma.prefecture.findUnique({ where: { id: prefectureId }, select: { id: true } }),
     prisma.area.findUnique({ where: { slug }, select: { id: true } })
   ]);
@@ -678,7 +678,7 @@ export async function createAreaAction(formData: FormData) {
     redirect("/admin?error=invalid_taxonomy_parent#taxonomy");
   }
 
-  if (existingArea) {
+  if (existingLocation) {
     redirect("/admin?error=taxonomy_slug_exists#taxonomy");
   }
 
@@ -696,25 +696,25 @@ export async function createAreaAction(formData: FormData) {
   redirect("/admin?status=taxonomy_created#taxonomy");
 }
 
-export async function updateAreaAction(formData: FormData) {
+export async function updateLocationAction(formData: FormData) {
   await requireAdmin();
-  const areaId = String(formData.get("areaId") ?? "");
+  const locationId = String(formData.get("locationId") ?? formData.get("areaId") ?? "");
   const prefectureId = String(formData.get("prefectureId") ?? "");
   const nameJa = String(formData.get("nameJa") ?? "").trim();
   const nameEn = String(formData.get("nameEn") ?? "").trim();
   const slug = slugify(String(formData.get("slug") ?? nameEn));
 
-  if (!areaId || !prefectureId || !nameJa || !nameEn || !slug) {
+  if (!locationId || !prefectureId || !nameJa || !nameEn || !slug) {
     redirect("/admin?error=missing_taxonomy_fields#taxonomy");
   }
 
-  const [area, prefecture, slugOwner] = await Promise.all([
-    prisma.area.findUnique({ where: { id: areaId }, select: { id: true, slug: true } }),
+  const [location, prefecture, slugOwner] = await Promise.all([
+    prisma.area.findUnique({ where: { id: locationId }, select: { id: true, slug: true } }),
     prisma.prefecture.findUnique({ where: { id: prefectureId }, select: { id: true } }),
     prisma.area.findUnique({ where: { slug }, select: { id: true } })
   ]);
 
-  if (!area) {
+  if (!location) {
     redirect("/admin?error=taxonomy_not_found#taxonomy");
   }
 
@@ -722,12 +722,12 @@ export async function updateAreaAction(formData: FormData) {
     redirect("/admin?error=invalid_taxonomy_parent#taxonomy");
   }
 
-  if (slugOwner && slugOwner.id !== area.id) {
+  if (slugOwner && slugOwner.id !== location.id) {
     redirect("/admin?error=taxonomy_slug_exists#taxonomy");
   }
 
   await prisma.area.update({
-    where: { id: area.id },
+    where: { id: location.id },
     data: {
       slug,
       prefectureId,
@@ -738,21 +738,21 @@ export async function updateAreaAction(formData: FormData) {
 
   revalidatePath("/admin");
   revalidatePath("/search");
-  revalidatePath(`/areas/${area.slug}`);
+  revalidatePath(`/areas/${location.slug}`);
   revalidatePath(`/areas/${slug}`);
   redirect("/admin?status=taxonomy_updated#taxonomy");
 }
 
-export async function deleteAreaAction(formData: FormData) {
+export async function deleteLocationAction(formData: FormData) {
   await requireAdmin();
-  const areaId = String(formData.get("areaId") ?? "");
+  const locationId = String(formData.get("locationId") ?? formData.get("areaId") ?? "");
 
-  if (!areaId) {
+  if (!locationId) {
     redirect("/admin?error=taxonomy_not_found#taxonomy");
   }
 
-  const area = await prisma.area.findUnique({
-    where: { id: areaId },
+  const location = await prisma.area.findUnique({
+    where: { id: locationId },
     select: {
       id: true,
       slug: true,
@@ -765,19 +765,19 @@ export async function deleteAreaAction(formData: FormData) {
     }
   });
 
-  if (!area) {
+  if (!location) {
     redirect("/admin?error=taxonomy_not_found#taxonomy");
   }
 
-  if (area._count.stores > 0 || area._count.storeRequests > 0) {
+  if (location._count.stores > 0 || location._count.storeRequests > 0) {
     redirect("/admin?error=taxonomy_in_use#taxonomy");
   }
 
-  await prisma.area.delete({ where: { id: area.id } });
+  await prisma.area.delete({ where: { id: location.id } });
 
   revalidatePath("/admin");
   revalidatePath("/search");
-  revalidatePath(`/areas/${area.slug}`);
+  revalidatePath(`/areas/${location.slug}`);
   redirect("/admin?status=taxonomy_deleted#taxonomy");
 }
 
