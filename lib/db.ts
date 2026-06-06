@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client";
+import { cache } from "react";
 import {
   brands as fallbackBrands,
   categories as fallbackCategories,
@@ -19,12 +20,7 @@ const storeInclude = {
     orderBy: { createdAt: "desc" },
     take: 20,
     include: {
-      photos: true,
-      reports: {
-        select: {
-          userId: true
-        }
-      }
+      photos: true
     }
   },
   brand: true,
@@ -36,10 +32,32 @@ const storeInclude = {
   }
 } satisfies Prisma.StoreInclude;
 
+const storeListInclude = {
+  brand: true,
+  category: true,
+  area: true,
+  photos: {
+    orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
+    take: 1
+  }
+} satisfies Prisma.StoreInclude;
+
 type StoreWithRelations = Prisma.StoreGetPayload<{ include: typeof storeInclude }>;
+type StoreListWithRelations = Prisma.StoreGetPayload<{ include: typeof storeListInclude }>;
 
 function canUseDatabase() {
   return Boolean(process.env.DATABASE_URL);
+}
+
+function getReportStatusRank(status: string) {
+  const rank: Record<string, number> = {
+    open: 0,
+    in_review: 1,
+    resolved: 2,
+    rejected: 3
+  };
+
+  return rank[status] ?? 4;
 }
 
 function mapCategory(category: { id: string; slug: string; nameJa: string; nameEn: string }): Category {
@@ -95,7 +113,7 @@ function stringifyOpeningHours(value: Prisma.JsonValue | null) {
   return typeof value === "string" ? value : JSON.stringify(value);
 }
 
-function mapStore(store: StoreWithRelations, currentUserId?: string): Store {
+function mapStore(store: StoreWithRelations): Store {
   return {
     id: store.id,
     slug: store.slug,
@@ -144,8 +162,56 @@ function mapStore(store: StoreWithRelations, currentUserId?: string): Store {
         id: photo.id,
         imageUrl: photo.imageUrl
       })),
-      hasReported: currentUserId ? review.reports.some((report) => report.userId === currentUserId) : false
+      hasReported: false
     }))
+  };
+}
+
+function mapStoreListItem(store: StoreListWithRelations): Store {
+  const primaryPhoto = store.photos[0];
+
+  return {
+    id: store.id,
+    slug: store.slug,
+    brandId: store.brandId ?? "",
+    brandSlug: store.brand?.slug ?? "",
+    categoryId: store.categoryId,
+    categorySlug: store.category.slug,
+    locationId: store.areaId,
+    locationSlug: store.area.slug,
+    name: store.name,
+    description: store.description ?? "",
+    address: store.address,
+    lat: Number(store.lat),
+    lng: Number(store.lng),
+    phone: store.phone ?? "",
+    websiteUrl: store.websiteUrl ?? "",
+    facebookUrl: store.facebookUrl ?? "",
+    openingHours: stringifyOpeningHours(store.openingHours),
+    averageRating: Number(store.averageRating),
+    reviewCount: store.reviewCount,
+    tagalogSupport: store.tagalogSupport,
+    gcashSupport: store.gcashSupport,
+    filipinoProducts: store.filipinoProducts,
+    remittanceSupport: store.remittanceSupport,
+    priceRange: store.priceRange ?? "",
+    featuredMenu: splitFeaturedMenu(store.featuredMenu),
+    photoUrl: primaryPhoto?.imageUrl ?? store.photoUrl ?? "https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=1200&q=80",
+    photos: primaryPhoto
+      ? [
+          {
+            id: primaryPhoto.id,
+            imageUrl: primaryPhoto.imageUrl,
+            storagePath: primaryPhoto.storagePath ?? "",
+            altText: primaryPhoto.altText ?? store.name,
+            sortOrder: primaryPhoto.sortOrder,
+            isPrimary: primaryPhoto.isPrimary
+          }
+        ]
+      : [],
+    isPublished: store.isPublished,
+    archivedAt: store.archivedAt?.toISOString().slice(0, 10) ?? "",
+    reviews: []
   };
 }
 
@@ -202,10 +268,10 @@ export async function getStores(): Promise<Store[]> {
   try {
     const stores = await prisma.store.findMany({
       where: { isPublished: true, archivedAt: null },
-      include: storeInclude,
+      include: storeListInclude,
       orderBy: [{ averageRating: "desc" }, { name: "asc" }]
     });
-    return stores.map((store) => mapStore(store));
+    return stores.map((store) => mapStoreListItem(store));
   } catch {
     return fallbackStores;
   }
@@ -239,7 +305,7 @@ export async function getFavoriteStores(userId: string): Promise<Store[]> {
       },
       include: {
         store: {
-          include: storeInclude
+          include: storeListInclude
         }
       },
       orderBy: {
@@ -247,7 +313,7 @@ export async function getFavoriteStores(userId: string): Promise<Store[]> {
       }
     });
 
-    return favorites.map((favorite) => mapStore(favorite.store));
+    return favorites.map((favorite) => mapStoreListItem(favorite.store));
   } catch {
     return [];
   }
@@ -265,6 +331,11 @@ export async function getAdminReports(): Promise<AdminReport[]> {
             body: true,
             rating: true,
             isHidden: true,
+            _count: {
+              select: {
+                reports: true
+              }
+            },
             store: {
               select: {
                 name: true,
@@ -278,19 +349,43 @@ export async function getAdminReports(): Promise<AdminReport[]> {
       take: 50
     });
 
-    return reports.map((report) => ({
-      id: report.id,
-      reason: report.reason,
-      status: report.status,
-      createdAt: report.createdAt.toISOString().slice(0, 10),
-      reviewId: report.review.id,
-      reviewBody: report.review.body ?? "",
-      reviewRating: report.review.rating,
-      reviewIsHidden: report.review.isHidden,
-      storeName: report.review.store.name,
-      storeSlug: report.review.store.slug,
-      reporterId: report.userId
-    }));
+    return reports
+      .map((report) => ({
+        id: report.id,
+        reason: report.reason,
+        status: report.status,
+        createdAt: report.createdAt.toISOString().slice(0, 10),
+        createdAtTime: report.createdAt.getTime(),
+        reviewId: report.review.id,
+        reviewBody: report.review.body ?? "",
+        reviewRating: report.review.rating,
+        reviewIsHidden: report.review.isHidden,
+        reviewReportCount: report.review._count.reports,
+        storeName: report.review.store.name,
+        storeSlug: report.review.store.slug,
+        reporterId: report.userId
+      }))
+      .sort((a, b) => {
+        const statusRank = getReportStatusRank(a.status) - getReportStatusRank(b.status);
+        if (statusRank !== 0) return statusRank;
+        const reportCountRank = b.reviewReportCount - a.reviewReportCount;
+        if (reportCountRank !== 0) return reportCountRank;
+        return b.createdAtTime - a.createdAtTime;
+      })
+      .map((report) => ({
+        id: report.id,
+        reason: report.reason,
+        status: report.status,
+        createdAt: report.createdAt,
+        reviewId: report.reviewId,
+        reviewBody: report.reviewBody,
+        reviewRating: report.reviewRating,
+        reviewIsHidden: report.reviewIsHidden,
+        reviewReportCount: report.reviewReportCount,
+        storeName: report.storeName,
+        storeSlug: report.storeSlug,
+        reporterId: report.reporterId
+      }));
   } catch {
     return [];
   }
@@ -314,7 +409,7 @@ export async function getAdminReviews(): Promise<AdminReview[]> {
           }
         }
       },
-      orderBy: [{ isHidden: "asc" }, { createdAt: "desc" }],
+      orderBy: [{ isHidden: "asc" }, { reports: { _count: "desc" } }, { createdAt: "desc" }],
       take: 100
     });
 
@@ -448,17 +543,17 @@ export async function searchStores(params: StoreSearchParams): Promise<Store[]> 
             }
           : {})
       },
-      include: storeInclude,
+      include: storeListInclude,
       orderBy: [{ averageRating: "desc" }, { name: "asc" }]
     });
 
-    return stores.map((store) => mapStore(store));
+    return stores.map((store) => mapStoreListItem(store));
   } catch {
     return searchFallbackStores(params);
   }
 }
 
-export async function getStore(slug: string): Promise<Store | undefined> {
+export const getStore = cache(async function getStore(slug: string): Promise<Store | undefined> {
   if (!canUseDatabase()) return getFallbackStore(slug);
 
   try {
@@ -470,48 +565,41 @@ export async function getStore(slug: string): Promise<Store | undefined> {
   } catch {
     return getFallbackStore(slug);
   }
-}
+});
 
-export async function getStoreForUser(slug: string, userId?: string): Promise<Store | undefined> {
-  if (!canUseDatabase()) return getFallbackStore(slug);
+export const getStoreForUser = cache(async function getStoreForUser(slug: string, userId?: string): Promise<Store | undefined> {
+  const store = await getStore(slug);
+  if (!store || !userId || !canUseDatabase()) return store;
 
   try {
-    const store = await prisma.store.findFirst({
-      where: { slug, isPublished: true, archivedAt: null },
-      include: {
-        ...storeInclude,
-        reviews: {
-          where: { isHidden: false },
-          orderBy: { createdAt: "desc" },
-          take: 20,
-          include: {
-            photos: true,
-            reports: userId
-              ? {
-                  where: {
-                    userId
-                  },
-                  select: {
-                    userId: true
-                  }
-                }
-              : {
-                  where: {
-                    id: "__never__"
-                  },
-                  select: {
-                    userId: true
-                  }
-                }
-          }
+    const reviewIds = store.reviews.map((review) => review.id);
+    if (reviewIds.length === 0) return store;
+
+    const reports = await prisma.report.findMany({
+      where: {
+        userId,
+        reviewId: {
+          in: reviewIds
         }
+      },
+      select: {
+        reviewId: true
       }
     });
-    return store ? mapStore(store, userId) : undefined;
+
+    const reportedReviewIds = new Set(reports.map((report) => report.reviewId));
+
+    return {
+      ...store,
+      reviews: store.reviews.map((review) => ({
+        ...review,
+        hasReported: reportedReviewIds.has(review.id)
+      }))
+    };
   } catch {
-    return getFallbackStore(slug);
+    return store;
   }
-}
+});
 
 export async function getCategory(slug: string): Promise<Category | undefined> {
   if (!canUseDatabase()) return getFallbackCategory(slug);

@@ -25,7 +25,7 @@ export default function PrivacyPage() {
         Access to administrative features is restricted by authentication and an admin allowlist. No internet service can guarantee perfect security, but KumustaHub uses reasonable safeguards aligned with the current MVP architecture.
       </PolicySection>
       <PolicySection title="7. Contact">
-        For privacy questions, deletion requests, correction requests, or concerns about submitted content, use the contact form at /contact.
+        KumustaHub is operated by the KumustaHub operations team. For privacy questions, deletion requests, correction requests, or concerns about submitted content, use the contact form at /contact.
       </PolicySection>
     </main>
   );

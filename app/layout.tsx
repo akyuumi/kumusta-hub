@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Globe2, Menu, Search, UserRound } from "lucide-react";
 import { AuthNav } from "@/components/AuthNav";
+import { LocaleSwitcher } from "@/components/LocaleSwitcher";
+import { getDictionary, getLocale } from "@/lib/i18n";
 import { absoluteUrl, siteUrl } from "@/lib/site";
+import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -29,9 +32,12 @@ export const metadata: Metadata = {
   }
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale();
+  const dict = getDictionary(locale);
+
   return (
-    <html lang="ja">
+    <html lang={locale}>
       <body>
         <header className="sticky top-0 z-50 border-b border-line bg-white/95 backdrop-blur">
           <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
@@ -40,16 +46,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <span>KumustaHub</span>
             </Link>
             <div className="hidden items-center gap-2 md:flex">
-              <AuthNav />
-              <Link className="rounded-md border border-line p-2 text-muted hover:text-ink" href="/admin" aria-label="Admin">
+              <AuthNav labels={dict.nav} />
+              <LocaleSwitcher locale={locale} labels={dict.locale} />
+              <Link className="rounded-md border border-line p-2 text-muted hover:text-ink" href="/admin" aria-label={dict.nav.admin}>
                 <Menu size={18} />
               </Link>
             </div>
             <div className="flex items-center gap-2 md:hidden">
-              <Link className="rounded-md border border-line p-2" href="/search" aria-label="Search">
+              <LocaleSwitcher locale={locale} labels={dict.locale} />
+              <Link className="rounded-md border border-line p-2" href="/search" aria-label={dict.nav.search}>
                 <Search size={18} />
               </Link>
-              <Link className="rounded-md border border-line p-2" href="/login" aria-label="Login">
+              <Link className="rounded-md border border-line p-2" href="/login" aria-label={dict.nav.login}>
                 <UserRound size={18} />
               </Link>
             </div>
@@ -63,14 +71,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Globe2 size={18} />
                 KumustaHub
               </div>
-              <p className="max-w-xl text-sm leading-6 text-muted">
-                Filipino community store discovery for restaurants, groceries, remittance, and delivery services in Japan.
-              </p>
+              <p className="max-w-xl text-sm leading-6 text-muted">{dict.footer.description}</p>
             </div>
             <div className="flex flex-wrap gap-4 text-sm text-muted">
-              <Link href="/terms">Terms</Link>
-              <Link href="/privacy">Privacy</Link>
-              <Link href="/contact">Contact</Link>
+              <Link href="/terms">{dict.footer.terms}</Link>
+              <Link href="/privacy">{dict.footer.privacy}</Link>
+              <Link href="/contact">{dict.footer.contact}</Link>
             </div>
           </div>
         </footer>

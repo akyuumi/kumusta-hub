@@ -29,7 +29,7 @@ export default function TermsPage() {
         The service is provided as available. KumustaHub does not guarantee uninterrupted availability, complete accuracy of store information, or suitability of any listed store or service.
       </PolicySection>
       <PolicySection title="8. Contact">
-        For questions about these terms, store corrections, deletion requests, or moderation concerns, use the contact form at /contact.
+        KumustaHub is operated by the KumustaHub operations team. For questions about these terms, store corrections, deletion requests, or moderation concerns, use the contact form at /contact.
       </PolicySection>
     </main>
   );

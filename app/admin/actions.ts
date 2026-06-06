@@ -928,21 +928,37 @@ export async function updateReviewVisibilityAction(formData: FormData) {
     redirect("/admin?error=review_not_found#reviews");
   }
 
-  const review = await prisma.review.update({
-    where: {
-      id: reviewId
-    },
-    data: {
-      isHidden
-    },
-    select: {
-      storeId: true,
-      store: {
-        select: {
-          slug: true
+  const review = await prisma.$transaction(async (tx) => {
+    const updatedReview = await tx.review.update({
+      where: {
+        id: reviewId
+      },
+      data: {
+        isHidden
+      },
+      select: {
+        storeId: true,
+        store: {
+          select: {
+            slug: true
+          }
         }
       }
-    }
+    });
+
+    await tx.report.updateMany({
+      where: {
+        reviewId,
+        status: {
+          in: ["open", "in_review"]
+        }
+      },
+      data: {
+        status: isHidden ? "resolved" : "rejected"
+      }
+    });
+
+    return updatedReview;
   });
 
   await refreshStoreReviewStats(review.storeId);

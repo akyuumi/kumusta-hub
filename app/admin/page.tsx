@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { Fragment } from "react";
+import { ImageFileInput } from "@/components/ImageFileInput";
 import { requireAdmin } from "@/lib/auth";
 import { getAdminContacts, getAdminReports, getAdminReviews, getAdminStoreRequests, getAdminStores, getBrands, getCategories, getLocations, getPrefectures } from "@/lib/db";
 import {
@@ -258,7 +259,7 @@ export default async function AdminPage({
           <div className="grid gap-4 md:grid-cols-[1fr_1fr]">
             <label className="space-y-1">
               <span className="text-sm font-semibold">Main photo</span>
-              <input name="photo" type="file" accept="image/jpeg,image/png,image/webp" className="block h-11 w-full rounded-md border border-line bg-white px-3 py-2 text-sm" />
+              <ImageFileInput name="photo" maxSizeMb={5} className="block h-11 w-full rounded-md border border-line bg-white px-3 py-2 text-sm" />
             </label>
             <Field label="Photo alt text" name="altText" placeholder="Store exterior or signature menu" />
           </div>
@@ -517,7 +518,7 @@ export default async function AdminPage({
           </label>
           <label className="space-y-1">
             <span className="text-sm font-semibold">Photo</span>
-            <input name="photo" type="file" accept="image/jpeg,image/png,image/webp" required className="block h-11 w-full rounded-md border border-line bg-white px-3 py-2 text-sm" />
+            <ImageFileInput name="photo" required maxSizeMb={5} className="block h-11 w-full rounded-md border border-line bg-white px-3 py-2 text-sm" />
           </label>
           <label className="space-y-1">
             <span className="text-sm font-semibold">Alt text</span>
@@ -582,6 +583,7 @@ export default async function AdminPage({
                   <th className="p-3">Store</th>
                   <th className="p-3">Review</th>
                   <th className="p-3">Review status</th>
+                  <th className="p-3">Review reports</th>
                   <th className="p-3">Reason</th>
                   <th className="p-3">Reporter</th>
                   <th className="p-3">Status</th>
@@ -597,6 +599,7 @@ export default async function AdminPage({
                     <td className="p-3">
                       <span className={report.reviewIsHidden ? "rounded-full bg-[#fff5ea] px-3 py-1 font-semibold text-coral" : "rounded-full bg-[#eef7f4] px-3 py-1 font-semibold text-bay"}>{report.reviewIsHidden ? "Hidden" : "Visible"}</span>
                     </td>
+                    <td className="p-3 font-semibold">{report.reviewReportCount}</td>
                     <td className="p-3">{formatReportReason(report.reason)}</td>
                     <td className="p-3 font-mono text-xs text-muted">{report.reporterId.slice(0, 8)}</td>
                     <td className="p-3">

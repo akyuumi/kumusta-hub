@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { getAdminEmails } from "@/lib/admin";
+import { isLocale, localeCookieName } from "@/lib/i18n";
 import type { SupabaseCookie } from "@/lib/supabase/cookies";
 
 const protectedPrefixes = ["/mypage", "/store-request"];
@@ -10,6 +11,16 @@ export async function proxy(request: NextRequest) {
   let response = NextResponse.next({
     request
   });
+  const requestedLocale = request.nextUrl.searchParams.get("lang");
+
+  if (isLocale(requestedLocale)) {
+    request.cookies.set(localeCookieName, requestedLocale);
+    response.cookies.set(localeCookieName, requestedLocale, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: "lax"
+    });
+  }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

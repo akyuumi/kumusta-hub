@@ -96,6 +96,7 @@ export type StoreSearchParams = {
   category?: string;
   rating?: string;
   tagalog?: string;
+  lang?: string;
 };
 
 export type AdminReport = {
@@ -107,6 +108,7 @@ export type AdminReport = {
   reviewBody: string;
   reviewRating: number;
   reviewIsHidden: boolean;
+  reviewReportCount: number;
   storeName: string;
   storeSlug: string;
   reporterId: string;

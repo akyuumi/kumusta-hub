@@ -4,6 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { ExternalLink, Flag, Heart, MapPin, Phone, Star, ThumbsUp } from "lucide-react";
+import { ImageFileInput } from "@/components/ImageFileInput";
+import { LeafletMap } from "@/components/LeafletMap";
 import { getCurrentUser } from "@/lib/auth";
 import { getLocation, getBrand, getCategory, getStore, getStoreForUser, getStores, isFavoriteStore } from "@/lib/db";
 import { absoluteUrl } from "@/lib/site";
@@ -240,14 +242,30 @@ export default async function StoreDetailPage({
               </a>
             </div>
           </div>
-          <a
-            href={`https://www.openstreetmap.org/?mlat=${store.lat}&mlon=${store.lng}#map=16/${store.lat}/${store.lng}`}
-            target="_blank"
-            rel="noreferrer"
-            className="map-grid block h-72 rounded-lg border border-line p-4"
-          >
-            <span className="inline-flex rounded-md bg-white px-3 py-2 text-sm font-semibold shadow-sm">Open in OpenStreetMap</span>
-          </a>
+          <div className="overflow-hidden rounded-lg border border-line bg-white shadow-sm">
+            <LeafletMap
+              points={[
+                {
+                  id: store.id,
+                  name: store.name,
+                  address: store.address,
+                  lat: store.lat,
+                  lng: store.lng
+                }
+              ]}
+              className="h-72 rounded-none"
+              zoom={16}
+            />
+            <a
+              href={`https://www.openstreetmap.org/?mlat=${store.lat}&mlon=${store.lng}#map=16/${store.lat}/${store.lng}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-between gap-3 border-t border-line px-4 py-3 text-sm font-semibold text-bay"
+            >
+              Open in OpenStreetMap
+              <ExternalLink size={16} />
+            </a>
+          </div>
         </aside>
       </section>
     </main>
@@ -327,8 +345,7 @@ function ReviewForm({ slug }: { slug: string }) {
       </div>
       <label className="mt-3 block space-y-1">
         <span className="text-sm font-semibold text-ink">Photos</span>
-        <input name="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple className="w-full rounded-md border border-line bg-white px-3 py-2 text-sm outline-none file:mr-3 file:rounded-md file:border-0 file:bg-bay file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white focus:border-bay" />
-        <span className="block text-xs text-muted">Up to 3 photos, 5MB each.</span>
+        <ImageFileInput name="photos" multiple maxFiles={3} maxSizeMb={5} className="w-full rounded-md border border-line bg-white px-3 py-2 text-sm outline-none file:mr-3 file:rounded-md file:border-0 file:bg-bay file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white focus:border-bay" />
       </label>
       <div className="mt-3 flex justify-end">
         <button className="rounded-md bg-coral px-4 py-2 text-sm font-semibold text-white hover:bg-[#d84d40]">Post review</button>

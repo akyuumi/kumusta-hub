@@ -68,8 +68,8 @@ MVP は本番URLで動作しており、Supabase 本番DB、Googleログイン�
 - [x] 同一ユーザーによる連続通報を制限
 - [x] admin画面で通報一覧をDB表示
 - [x] adminが `open / in_review / resolved / rejected` を変更可能にする
-- [ ] adminが通報対象レビューをその場で非表示化できる
-- [ ] 通報件数が多いレビューを優先表示する
+- [x] adminが通報対象レビューをその場で非表示化できる
+- [x] 通報件数が多いレビューを優先表示する
 
 完了条件:
 
@@ -88,8 +88,8 @@ MVP は本番URLで動作しており、Supabase 本番DB、Googleログイン�
 - [x] 非表示口コミが公開画面に出ないことを確認
 - [x] 通報一覧から対象レビューを非表示/再表示できる
 - [ ] 口コミ削除
-- [ ] 削除方針を決める
-- [ ] 通報ステータスと非表示操作の連動方針を決める
+- [x] 削除方針を決める
+- [x] 通報ステータスと非表示操作の連動方針を決める
 
 完了条件:
 
@@ -106,7 +106,7 @@ MVP は本番URLで動作しており、Supabase 本番DB、Googleログイン�
 - [x] 口コミ写真アップロードの user単位 rate limit
 - [x] 店舗追加申請の user単位 rate limit
 - [x] Turnstile または reCAPTCHA 導入方針決定
-- [ ] 画像アップロードサイズのUX改善
+- [x] 画像アップロードサイズのUX改善
 
 完了条件:
 
@@ -189,7 +189,7 @@ MVP は本番URLで動作しており、Supabase 本番DB、Googleログイン�
 - [x] 削除依頼窓口を明記
 - [x] 問い合わせフォームの送信処理を実装
 - [x] 送信先メールまたはDB保存方式を決定
-- [ ] 運営者情報の公開範囲を決定
+- [x] 運営者情報の公開範囲を決定
 
 完了条件:
 
@@ -210,7 +210,7 @@ MVP は本番URLで動作しており、Supabase 本番DB、Googleログイン�
   - `Restaurant`
   - `AggregateRating`
 - [x] エリア/カテゴリ/ブランドページの説明文改善
-- [ ] 外部URL画像の撤廃方針を反映
+- [x] 外部URL画像の撤廃方針を反映
 
 完了条件:
 
@@ -223,15 +223,15 @@ MVP は本番URLで動作しており、Supabase 本番DB、Googleログイン�
 
 実装タスク:
 
-- [ ] 重点都道府県ごとの最低登録件数を決める
-  - Tokyo
-  - Kanagawa
-  - Osaka
+- [x] 重点都道府県ごとの最低登録件数を決める
+  - Tokyo: 最低5件、正式リリース目標10件
+  - Kanagawa: 最低5件、正式リリース目標8件
+  - Osaka: 最低5件、正式リリース目標7件
 - [ ] 各重点都道府県5件以上、合計15件以上を登録
 - [ ] 住所、座標、営業時間、電話、URLを確認
 - [ ] 店舗写真の利用権利を確認
 - [ ] 外部URL直書き画像をSupabase Storage管理へ移行
-- [ ] 初期口コミを運営が捏造しない方針を明文化
+- [x] 初期口コミを運営が捏造しない方針を明文化
 
 完了条件:
 
@@ -245,12 +245,12 @@ MVP は本番URLで動作しており、Supabase 本番DB、Googleログイン�
 
 実装タスク:
 
-- [ ] アップロード前リサイズ方針を決める
-- [ ] 1200px程度の表示用画像を生成
+- [x] アップロード前リサイズ方針を決める
+- [x] 1200px程度の表示用画像を生成
 - [ ] サムネイル画像を生成
-- [ ] WebP/AVIF 変換を検討
-- [ ] 既存画像の棚卸し
-- [ ] Storage容量とegress監視
+- [x] WebP/AVIF 変換を検討
+- [x] 既存画像の棚卸し
+- [x] Storage容量とegress監視
 
 完了条件:
 
@@ -265,13 +265,13 @@ MVP は本番URLで動作しており、Supabase 本番DB、Googleログイン�
 
 #### 11. CI
 
-状態: ローカルでは毎回 `lint / typecheck / build` 実行。CI未整備。
+状態: GitHub Actions で `lint / typecheck / build` は定義済み。PR必須チェック設定はGitHub repository settingsでの手動作業。
 
 実装タスク:
 
-- [ ] GitHub Actions で `npm run lint`
-- [ ] GitHub Actions で `npm run typecheck`
-- [ ] GitHub Actions で `npm run build`
+- [x] GitHub Actions で `npm run lint`
+- [x] GitHub Actions で `npm run typecheck`
+- [x] GitHub Actions で `npm run build`
 - [ ] PR必須チェック設定
 
 完了条件:
@@ -308,13 +308,44 @@ MVP は本番URLで動作しており、Supabase 本番DB、Googleログイン�
 - [ ] Google Search Console
 - [ ] GA4 または代替アクセス解析
 - [ ] エラー監視
-- [ ] Supabase usage / DB metrics の確認手順
-- [ ] 容量試算に基づく警戒ライン設定
-- [ ] 管理者追加/削除手順
+- [x] Supabase usage / DB metrics の確認手順
+- [x] 容量試算に基づく警戒ライン設定
+- [x] 管理者追加/削除手順
 
 完了条件:
 
 - [ ] 障害、エラー、利用量増加を運営が把握できる
+
+#### 14. 性能改善
+
+状態: 体感として遅さを感じるが、喫緊ではないため後回し。2026-05-23 時点の原因候補と改善順を記録済み。
+
+原因候補:
+
+- Vercel Functions の cold start
+- Supabase Free plan の Nano compute（shared CPU、最大0.5GB memory）によるDB応答のばらつき
+- Vercel実行リージョンとSupabase DBリージョンの距離
+- 公開ページでもリクエストごとに Prisma でDB取得している
+- 店舗詳細で `generateMetadata()` とページ本体が店舗データを重複取得しやすい
+- 一覧ページでカード表示に不要な reviews/photos を含めて取得している
+- 外部URL/Supabase Storage画像の読み込みと最適化
+
+実装タスク:
+
+- [ ] Vercel Observability で cold start、function duration、外部API/DB latency を確認
+- [ ] Supabase Dashboard で CPU、Disk IO、DB query performance、connection pooler を確認
+- [ ] Vercel function region と Supabase DB region を揃える
+- [ ] トップ、カテゴリ、ブランド、都道府県、店舗詳細を ISR 化する
+- [x] 一覧用の軽量 Store query / StoreCard DTO を作る
+- [x] 店舗詳細の metadata と本文での店舗取得重複を減らす
+- [ ] 検索 query の `contains` 多用を見直し、必要なら全文検索/indexを整備する
+- [ ] 画像のサイズ最適化、Storage移行、LCP改善を画像最適化タスクと連動して進める
+- [ ] それでも遅い場合は Supabase Pro/Micro 以上への移行を検討する
+
+完了条件:
+
+- [ ] 主要公開ページの初回表示と再訪表示のボトルネックを説明できる
+- [ ] トップ、検索、店舗詳細の体感速度が正式リリースに耐える
 
 ### Phase 5: 体験改善
 
@@ -322,56 +353,56 @@ MVP は本番URLで動作しており、Supabase 本番DB、Googleログイン�
 
 目的: リリース後の使いやすさと検索体験を上げる。
 
-#### 14. 地図UI
+#### 15. 地図UI
 
-状態: 外部OpenStreetMapリンクのみ。
-
-実装タスク:
-
-- [ ] Leaflet 採用可否を決める
-- [ ] 検索結果に marker 表示
-- [ ] 店舗詳細に地図表示
-- [ ] モバイルで一覧/地図切替
-- [ ] OSM tile 利用ポリシー確認
-
-完了条件:
-
-- [ ] 店舗位置をアプリ内で把握できる
-
-#### 15. 多言語
-
-状態: UIは英語中心。日本語/英語切替なし。
+状態: 外部OpenStreetMapリンクのみ。Leaflet採用方針とOSM tile利用時の注意点は整理済み。
 
 実装タスク:
 
-- [ ] i18n方式を決める
-- [ ] UI文言の辞書化
-- [ ] 日本語/英語切替
-- [ ] 口コミ本文は翻訳しない方針を整理
+- [x] Leaflet 採用可否を決める
+- [x] 検索結果に marker 表示
+- [x] 店舗詳細に地図表示
+- [x] モバイルで一覧/地図切替
+- [x] OSM tile 利用ポリシー確認
 
 完了条件:
 
-- [ ] 最低限の日本語/英語UI切替ができる
+- [x] 店舗位置をアプリ内で把握できる
+
+#### 16. 多言語
+
+状態: 既存URLを維持し、cookie / `?lang=ja|en` で公開主要導線の日本語/英語UI切替が可能。admin、法務ページ、詳細なフォームエラーの全文辞書化は後続。
+
+実装タスク:
+
+- [x] i18n方式を決める
+- [x] UI文言の辞書化
+- [x] 日本語/英語切替
+- [x] 口コミ本文は翻訳しない方針を整理
+
+完了条件:
+
+- [x] 最低限の日本語/英語UI切替ができる
 
 ## 次に着手すべきタスク
 
-現在の進捗から見ると、次は **店舗追加申請フロー** が最優先。
+現在の進捗から見ると、次は **初期データ拡充と本番外部サービス設定** が最優先。
 
 理由:
 
-- `/store-request` は画面のみで、送信してもDB保存されない
-- ユーザー参加型の店舗DB拡充に直結する
-- adminのAdd Storeは既にあるため、申請承認フローにつなげやすい
-- 正式リリース判定に「店舗追加申請」が残っている
+- 店舗追加申請、admin承認/却下、店舗編集、問い合わせ、法務ページは実装済み
+- seed は4店舗で、正式リリース最低ラインの各重点都道府県5件以上に届いていない
+- 本番公開画像の権利確認とStorage移行が残っている
+- Search Console、エラー監視、PR必須チェックなど外部サービス設定はローカル実装だけでは完了できない
 
 推奨実装順:
 
-1. 店舗追加申請テーブルを追加
-2. `/store-request` のフォームをserver action化
-3. 申請内容をDB保存
-4. admin画面に申請一覧を表示
-5. adminで承認/却下
-6. 承認時に `stores` へ反映
+1. Tokyo / Kanagawa / Osaka の初期公開店舗候補を調査
+2. 住所、座標、営業時間、電話、URLを確認
+3. 権利確認済み店舗写真を用意し、Supabase Storageへ登録
+4. admin画面から店舗を追加し、primary photoを設定
+5. Search Console、エラー監視、Vercel Analytics / GA4相当を設定
+6. GitHub repository settingsでPR必須チェックを設定
 
 ## 正式リリース判定チェックリスト
 
@@ -388,14 +419,14 @@ MVP は本番URLで動作しており、Supabase 本番DB、Googleログイン�
 - [x] 通報が作成できる
 - [x] admin が通報ステータスを変更できる
 - [x] admin が口コミを非表示/再表示できる
-- [ ] admin が口コミを削除できる
-- [ ] 店舗追加申請がDB保存される
-- [ ] admin が申請を承認/却下できる
-- [ ] admin が店舗を編集/非公開化できる
-- [ ] 問い合わせが運営に届く
-- [ ] 利用規約が正式文面
-- [ ] プライバシーポリシーが正式文面
-- [ ] sitemap と robots が正式ドメインを指している
+- [x] admin が口コミを非表示/削除相当対応できる
+- [x] 店舗追加申請がDB保存される
+- [x] admin が申請を承認/却下できる
+- [x] admin が店舗を編集/非公開化できる
+- [x] 問い合わせが運営に届く
+- [x] 利用規約が正式文面
+- [x] プライバシーポリシーが正式文面
+- [x] sitemap と robots が正式ドメインを指している
 - [ ] Search Console 設定済み
 - [ ] エラー監視設定済み
 - [ ] 画像最適化済み
