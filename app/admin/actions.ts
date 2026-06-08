@@ -1,10 +1,13 @@
 "use server";
 
+import type { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
+
+type TransactionClient = Prisma.TransactionClient;
 
 const STORE_PHOTOS_BUCKET = "store-photos";
 const MAX_STORE_PHOTO_SIZE = 5 * 1024 * 1024;
@@ -137,7 +140,7 @@ export async function uploadStorePhotoAction(formData: FormData) {
 
   const { publicUrl, storagePath } = await uploadStorePhotoFile({ file, slug: store.slug });
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: TransactionClient) => {
     if (isPrimary) {
       await tx.storePhoto.updateMany({
         where: { storeId: store.id },
@@ -196,7 +199,7 @@ export async function updateStorePhotoPrimaryAction(formData: FormData) {
     redirect("/admin?error=store_photo_not_found#store-photos");
   }
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: TransactionClient) => {
     await tx.storePhoto.updateMany({
       where: { storeId: photo.storeId },
       data: { isPrimary: false }
@@ -254,7 +257,7 @@ export async function deleteStorePhotoAction(formData: FormData) {
     }
   }
 
-  const nextPhoto = await prisma.$transaction(async (tx) => {
+  const nextPhoto = await prisma.$transaction(async (tx: TransactionClient) => {
     await tx.storePhoto.delete({
       where: { id: photo.id }
     });
@@ -823,7 +826,7 @@ export async function approveStoreRequestAction(formData: FormData) {
     redirect("/admin?error=store_request_slug_exists#store-requests");
   }
 
-  const store = await prisma.$transaction(async (tx) => {
+  const store = await prisma.$transaction(async (tx: TransactionClient) => {
     const createdStore = await tx.store.create({
       data: {
         slug,
@@ -928,7 +931,7 @@ export async function updateReviewVisibilityAction(formData: FormData) {
     redirect("/admin?error=review_not_found#reviews");
   }
 
-  const review = await prisma.$transaction(async (tx) => {
+  const review = await prisma.$transaction(async (tx: TransactionClient) => {
     const updatedReview = await tx.review.update({
       where: {
         id: reviewId

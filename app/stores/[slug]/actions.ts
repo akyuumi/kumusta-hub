@@ -1,11 +1,14 @@
 "use server";
 
+import type { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { consumeUserRateLimit } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
+
+type TransactionClient = Prisma.TransactionClient;
 
 const REVIEW_PHOTOS_BUCKET = "review-photos";
 const MAX_REVIEW_PHOTO_COUNT = 3;
@@ -88,7 +91,7 @@ export async function createReviewAction(formData: FormData) {
 
   const uploadedPhotos = photos.length > 0 ? await uploadReviewPhotos({ files: photos, slug, userId: user.id }) : [];
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: TransactionClient) => {
     await tx.review.create({
       data: {
         userId: user.id,
